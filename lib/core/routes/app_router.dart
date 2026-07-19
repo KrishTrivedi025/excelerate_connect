@@ -4,11 +4,13 @@ import '../../screens/home/home_screen.dart';
 import '../../screens/login/login_screen.dart';
 import '../../screens/program_details/program_details_screen.dart';
 import '../../screens/program_listing/program_listing_screen.dart';
+import '../../screens/signup/signup_screen.dart';
 
 class AppRouter {
   const AppRouter._();
 
   static const String login = '/login';
+  static const String signup = '/signup';
   static const String home = '/home';
   static const String programListing = '/programs';
   static const String programDetails = '/program-details';
@@ -17,6 +19,8 @@ class AppRouter {
     switch (settings.name) {
       case login:
         return _page(const LoginScreen());
+      case signup:
+        return _page(const SignupScreen());
       case home:
         return _page(const HomeScreen());
       case programListing:
