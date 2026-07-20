@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Excelerate Connect (full app)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "Dev: Login screen only",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/dev/main_login.dart"
+    },
+    {
+      "name": "Dev: Sign-Up screen only",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/dev/main_signup.dart"
+    },
+    {
+      "name": "Dev: Home screen only",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/dev/main_home.dart"
+    },
+    {
+      "name": "Dev: Program Listing screen only",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/dev/main_program_listing.dart"
+    },
+    {
+      "name": "Dev: Program Details screen only",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/dev/main_program_details.dart"
+    }
+  ]
+}
