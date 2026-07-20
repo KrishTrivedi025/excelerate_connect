@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
-import '../../widgets/primary_text_field.dart';
 import '../../widgets/program_card.dart';
 
 class ProgramListingScreen extends StatefulWidget {
@@ -56,69 +55,167 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
     final filteredList = _filteredOpportunities;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Programs'),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: PrimaryTextField(
-              hintText: 'Search programs...',
-              prefixIcon: Icons.search,
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value ?? '';
-                });
-              },
+      backgroundColor: AppColors.background,
+      body: RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 140.0,
+              floating: false,
+              pinned: true,
+              elevation: 0,
+              backgroundColor: AppColors.surface,
+              surfaceTintColor: AppColors.surface,
+              leading: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
+                    onPressed: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                    },
+                  ),
+                ),
+              ),
+              flexibleSpace: FlexibleSpaceBar(
+                titlePadding: const EdgeInsets.only(left: 64.0, bottom: 14.0),
+                centerTitle: false,
+                background: Container(
+                  color: const Color.fromARGB(255, 42, 139, 237).withValues(alpha: 0.10),
+                ),
+                title: Text(
+                  'Explore Programs',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
             ),
-          ),
-          
-          // Filter Chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: Row(
-              children: [
-                _buildFilterChip('All', null),
-                ...OpportunityType.values.map((type) {
-                  return _buildFilterChip(_getCategoryLabel(type), type);
-                }),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: AppSpacing.md),
-          
-          // Program List
-          Expanded(
-            child: filteredList.isEmpty
-                ? _buildEmptyState()
-                : RefreshIndicator(
-                    onRefresh: _handleRefresh,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-                      itemCount: filteredList.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-                      itemBuilder: (context, index) {
-                        final program = filteredList[index];
-                        return ProgramCard(
-                          program: program,
-                          onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              AppRouter.programDetails,
-                              arguments: program,
-                            );
-                          },
-                        );
-                      },
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const SizedBox(height: AppSpacing.sm),
+                  // Search Bar Pill
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: AppColors.divider.withValues(alpha: 0.3)),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 2),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: TextField(
+                              onChanged: (value) {
+                                setState(() {
+                                  _searchQuery = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Search programs, skills, or topics...',
+                                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            height: 24,
+                            width: 1,
+                            color: AppColors.divider.withValues(alpha: 0.3),
+                            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                          ),
+                          Icon(Icons.tune, color: AppColors.textPrimary.withValues(alpha: 0.7), size: 20),
+                        ],
+                      ),
                     ),
                   ),
-          ),
-        ],
+                  const SizedBox(height: AppSpacing.md),
+                  
+                  // Filter Chips
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                    child: Row(
+                      children: [
+                        _buildFilterChip('All', null),
+                        ...OpportunityType.values.map((type) {
+                          return _buildFilterChip(_getCategoryLabel(type), type);
+                        }),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+              ),
+            ),
+            
+            // Program List
+            filteredList.isEmpty
+                ? SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _buildEmptyState(),
+                  )
+                : SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final program = filteredList[index];
+                          return TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: Duration(milliseconds: 400 + (index * 100).clamp(0, 500)),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, child) {
+                              return Transform.translate(
+                                offset: Offset(0, 20 * (1 - value)),
+                                child: Opacity(
+                                  opacity: value,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                              child: ProgramCard(
+                                program: program,
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRouter.programDetails,
+                                    arguments: program,
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                        childCount: filteredList.length,
+                      ),
+                    ),
+                  ),
+          ],
+        ),
       ),
     );
   }
@@ -130,6 +227,17 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
       child: ChoiceChip(
         label: Text(label),
         selected: isSelected,
+        showCheckmark: false,
+        backgroundColor: AppColors.background,
+        selectedColor: AppColors.primary,
+        side: isSelected ? BorderSide.none : BorderSide(color: AppColors.divider.withValues(alpha: 0.5)),
+        labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: isSelected ? AppColors.onPrimary : AppColors.textPrimary,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
         onSelected: (selected) {
           setState(() {
             _selectedCategory = selected ? type : null;
