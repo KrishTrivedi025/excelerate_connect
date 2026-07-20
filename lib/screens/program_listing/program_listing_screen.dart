@@ -72,11 +72,11 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                 padding: const EdgeInsets.all(8.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: AppColors.accent.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
+                    icon: const Icon(Icons.arrow_back, color: AppColors.accent, size: 20),
                     onPressed: () {
                       if (Navigator.canPop(context)) {
                         Navigator.pop(context);
@@ -89,7 +89,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                 titlePadding: const EdgeInsets.only(left: 64.0, bottom: 14.0),
                 centerTitle: false,
                 background: Container(
-                  color: const Color.fromARGB(255, 42, 139, 237).withValues(alpha: 0.10),
+                  color: AppColors.accent.withValues(alpha: 0.10),
                 ),
                 title: Text(
                   'Explore Programs',
@@ -229,7 +229,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
         selected: isSelected,
         showCheckmark: false,
         backgroundColor: AppColors.background,
-        selectedColor: AppColors.primary,
+        selectedColor: AppColors.accent,
         side: isSelected ? BorderSide.none : BorderSide(color: AppColors.divider.withValues(alpha: 0.5)),
         labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: isSelected ? AppColors.onPrimary : AppColors.textPrimary,
@@ -252,12 +252,26 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 64,
-            color: AppColors.textSecondary.withValues(alpha: 0.5),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.accent.withValues(alpha: 0.2),
+                  blurRadius: 32,
+                  spreadRadius: 8,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.travel_explore_rounded,
+              size: 72,
+              color: AppColors.accent,
+            ),
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             'No programs found.',
             style: Theme.of(context).textTheme.titleLarge,
@@ -269,15 +283,22 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                   color: AppColors.textSecondary,
                 ),
           ),
-          const SizedBox(height: AppSpacing.lg),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _searchQuery = '';
-                _selectedCategory = null;
-              });
-            },
-            child: const Text('Clear Filters'),
+          const SizedBox(height: AppSpacing.xl),
+          SizedBox(
+            width: 200,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                minimumSize: const Size(200, 48), // Explicitly overrides the double.infinity theme default
+              ),
+              onPressed: () {
+                setState(() {
+                  _searchQuery = '';
+                  _selectedCategory = null;
+                });
+              },
+              child: const Text('Clear Filters'),
+            ),
           ),
         ],
       ),
