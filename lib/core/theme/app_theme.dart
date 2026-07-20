@@ -6,19 +6,30 @@ import 'package:google_fonts/google_fonts.dart';
 class AppColors {
   const AppColors._();
 
-  static const Color primary = Color(0xFF1976D2);
-  static const Color primaryDark = Color(0xFF0D47A1);
-  static const Color primaryLight = Color(0xFF42A5F5);
+  static const Color primary = Color(0xFFFF8C42);
+  static const Color primaryDark = Color(0xFFE46A00);
+  static const Color primaryLight = Color(0xFFFFB366);
+
   static const Color accent = Color(0xFFFFA726);
+
   static const Color success = Color(0xFF4CAF50);
-  static const Color error = Color(0xFFF44336);
-  static const Color textPrimary = Color(0xFF212121);
-  static const Color textSecondary = Color(0xFF757575);
-  static const Color background = Color(0xFFFAFAFA);
+  static const Color error = Color(0xFFE53935);
+
+  static const Color textPrimary = Color(0xFF1F2937);
+  static const Color textSecondary = Color(0xFF6B7280);
+
+  static const Color background = Color(0xFFFFFFFF);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color divider = Color(0xFFE0E0E0);
+
+  static const Color divider = Color(0xFFE5E7EB);
+
   static const Color onPrimary = Colors.white;
+
+  // Bottom wave
+  static const Color wave = Color(0xFFFFE5D0);
 }
+
+  
 
 /// Spacing scale — spec Section 3.3. Use these values only.
 class AppSpacing {
@@ -57,7 +68,7 @@ class AppTheme {
         primary: AppColors.primary,
         onPrimary: AppColors.onPrimary,
         primaryContainer: AppColors.primaryLight,
-        secondary: AppColors.accent,
+        secondary: AppColors.primary,
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
