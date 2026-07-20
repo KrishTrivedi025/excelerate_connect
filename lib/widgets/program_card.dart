@@ -29,45 +29,94 @@ class ProgramCard extends StatelessWidget {
 
   Widget _buildVertical(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Card(
-      child: InkWell(
-        onTap: onTap,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _ProgramThumbnail(program: program, width: 100, height: 100),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      program.name,
-                      style: textTheme.titleLarge,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      _startDateLabel(program),
-                      style: textTheme.labelSmall,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      program.shortDescription,
-                      style: textTheme.bodyMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    _CategoryChip(label: program.categoryLabel),
-                  ],
+        border: Border.all(color: AppColors.divider.withValues(alpha: 0.3)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.button),
+                  child: _ProgramThumbnail(program: program, width: 64, height: 64),
                 ),
-              ),
-            ],
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        program.name,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        program.shortDescription,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Row(
+                        children: [
+                          Icon(
+                            _ProgramThumbnail._iconFor(program.type),
+                            size: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              program.categoryLabel,
+                              style: textTheme.labelSmall?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          const Icon(
+                            Icons.star,
+                            size: 14,
+                            color: Colors.amber,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '4.8 (120)', // Static mock rating matching the picture layout
+                            style: textTheme.labelSmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Icon(
+                  Icons.bookmark_border,
+                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+                  size: 24,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -132,27 +181,6 @@ class ProgramCard extends StatelessWidget {
     if (program.cohorts.isEmpty) return program.durationLabel;
     final date = program.cohorts.first.startDate;
     return 'Starts ${_kMonthAbbreviations[date.month - 1]} ${date.day}, ${date.year}';
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  final String label;
-  const _CategoryChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      label: Text(label),
-      backgroundColor: AppColors.primaryLight.withValues(alpha: 0.15),
-      labelStyle: Theme.of(context)
-          .textTheme
-          .labelSmall
-          ?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
-      side: BorderSide.none,
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-    );
   }
 }
 
