@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatefulWidget {
+/// Temporary placeholder Home Screen.
+/// The actual Home UI will be developed by another team member.
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Home Screen')),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Home')),
+      body: const Center(
+        child: Text('Home Screen - Developed by another team member'),
+      ),
     );
   }
 }
