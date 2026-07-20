@@ -4,6 +4,20 @@ import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../widgets/program_card.dart';
 
+/// Program Listing Screen — Week 2 Build
+/// 
+/// Features:
+/// - Search bar with live filtering
+/// - Category filter chips (All + 8 opportunity types)
+/// - Pull-to-refresh indicator
+/// - Animated list with staggered entrance
+/// - Empty state with "Clear Filters" CTA
+/// - Navigation to Program Details screen with transition
+/// 
+/// Connected to:
+/// - AppRouter.programListing (navigation entry point)
+/// - ProgramDetailsScreen (via tap on card)
+/// - mock_data.Opportunity & OpportunityType models
 class ProgramListingScreen extends StatefulWidget {
   const ProgramListingScreen({super.key});
 
@@ -12,9 +26,13 @@ class ProgramListingScreen extends StatefulWidget {
 }
 
 class _ProgramListingScreenState extends State<ProgramListingScreen> {
+  /// Search query — updated via TextField onChanged callback
   String _searchQuery = '';
+
+  /// Selected category filter — null = "All"
   OpportunityType? _selectedCategory;
 
+  /// Computed getter: filters mockOpportunities by search + category
   List<Opportunity> get _filteredOpportunities {
     return mockOpportunities.where((opp) {
       final matchesSearch = opp.name.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -23,12 +41,13 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
     }).toList();
   }
 
+  /// Simulates network refresh (mock data is static)
   Future<void> _handleRefresh() async {
-    // Since we are using mock data, just delay a bit to simulate network
     await Future.delayed(const Duration(seconds: 1));
     setState(() {});
   }
 
+  /// Category label for filter chip display
   String _getCategoryLabel(OpportunityType type) {
     switch (type) {
       case OpportunityType.internship:
@@ -61,6 +80,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
+            // --- HEADER: SliverAppBar with title ---
             SliverAppBar(
               expandedHeight: 140.0,
               floating: false,
@@ -72,7 +92,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                 padding: const EdgeInsets.all(8.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.1),
+                    color: AppColors.accent.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
@@ -89,7 +109,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                 titlePadding: const EdgeInsets.only(left: 64.0, bottom: 14.0),
                 centerTitle: false,
                 background: Container(
-                  color: AppColors.accent.withValues(alpha: 0.10),
+                  color: AppColors.accent.withOpacity(0.10),
                 ),
                 title: Text(
                   'Explore Programs',
@@ -101,10 +121,13 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                 ),
               ),
             ),
+
+            // --- SEARCH & FILTER SECTION ---
             SliverToBoxAdapter(
               child: Column(
                 children: [
                   const SizedBox(height: AppSpacing.sm),
+                  
                   // Search Bar Pill
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -112,7 +135,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: AppColors.divider.withValues(alpha: 0.3)),
+                        border: Border.all(color: AppColors.divider.withOpacity(0.3)),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 2),
                       child: Row(
@@ -141,26 +164,26 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                           Container(
                             height: 24,
                             width: 1,
-                            color: AppColors.divider.withValues(alpha: 0.3),
+                            color: AppColors.divider.withOpacity(0.3),
                             margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                           ),
-                          Icon(Icons.tune, color: AppColors.textPrimary.withValues(alpha: 0.7), size: 20),
+                          Icon(Icons.tune, color: AppColors.textPrimary.withOpacity(0.7), size: 20),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   
-                  // Filter Chips
+                  // Filter Chips — Category Selection
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                     child: Row(
                       children: [
-                        _buildFilterChip('All', null),
+                        _buildFilterChip(context, 'All', null),
                         ...OpportunityType.values.map((type) {
-                          return _buildFilterChip(_getCategoryLabel(type), type);
+                          return _buildFilterChip(context, _getCategoryLabel(type), type);
                         }),
                       ],
                     ),
@@ -170,57 +193,60 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
               ),
             ),
             
-            // Program List
-            filteredList.isEmpty
-                ? SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _buildEmptyState(),
-                  )
-                : SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final program = filteredList[index];
-                          return TweenAnimationBuilder<double>(
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            duration: Duration(milliseconds: 400 + (index * 100).clamp(0, 500)),
-                            curve: Curves.easeOutCubic,
-                            builder: (context, value, child) {
-                              return Transform.translate(
-                                offset: Offset(0, 20 * (1 - value)),
-                                child: Opacity(
-                                  opacity: value,
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                              child: ProgramCard(
-                                program: program,
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRouter.programDetails,
-                                    arguments: program,
-                                  );
-                                },
-                              ),
+            // --- PROGRAM LIST or EMPTY STATE ---
+            if (filteredList.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _buildEmptyState(context),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final program = filteredList[index];
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 400 + (index * 100).clamp(0, 500)),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 20 * (1 - value)),
+                            child: Opacity(
+                              opacity: value,
+                              child: child,
                             ),
                           );
                         },
-                        childCount: filteredList.length,
-                      ),
-                    ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: ProgramCard(
+                            program: program,
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                AppRouter.programDetails,
+                                arguments: program,
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: filteredList.length,
                   ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFilterChip(String label, OpportunityType? type) {
+  /// Builds a category filter chip
+  /// FIXED: Now properly receives context parameter
+  Widget _buildFilterChip(BuildContext context, String label, OpportunityType? type) {
     final isSelected = _selectedCategory == type;
     return Padding(
       padding: const EdgeInsets.only(right: AppSpacing.sm),
@@ -230,7 +256,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
         showCheckmark: false,
         backgroundColor: AppColors.background,
         selectedColor: AppColors.accent,
-        side: isSelected ? BorderSide.none : BorderSide(color: AppColors.divider.withValues(alpha: 0.5)),
+        side: isSelected ? BorderSide.none : BorderSide(color: AppColors.divider.withOpacity(0.5)),
         labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: isSelected ? AppColors.onPrimary : AppColors.textPrimary,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
@@ -247,7 +273,8 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  /// Empty state shown when no programs match filters
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -255,11 +282,11 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
           Container(
             padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.1),
+              color: AppColors.accent.withOpacity(0.1),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.accent.withValues(alpha: 0.2),
+                  color: AppColors.accent.withOpacity(0.2),
                   blurRadius: 32,
                   spreadRadius: 8,
                 ),
@@ -289,7 +316,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.accent,
-                minimumSize: const Size(200, 48), // Explicitly overrides the double.infinity theme default
+                minimumSize: const Size(200, 48),
               ),
               onPressed: () {
                 setState(() {
