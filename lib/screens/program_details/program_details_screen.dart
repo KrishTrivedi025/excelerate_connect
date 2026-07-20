@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
 
 class ProgramDetailsScreen extends StatefulWidget {
@@ -11,9 +12,11 @@ class ProgramDetailsScreen extends StatefulWidget {
 }
 
 class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
-  static const _primary = Color(0xFF1976D2);
-  static const _textSecondary = Color(0xFF757575);
-  static const _divider = Color(0xFFE0E0E0);
+  // Sourced from AppColors instead of hardcoded so this screen follows the
+  // app's actual brand color, not just the original spec value.
+  static const _primary = AppColors.primary;
+  static const _textSecondary = AppColors.textSecondary;
+  static const _divider = AppColors.divider;
 
   late bool _isFavorited;
 
@@ -105,12 +108,12 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
             ? Image.asset(
                 opportunity.imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: _primary),
+                errorBuilder: (_, _, _) => Container(color: _primary),
               )
             : Image.network(
                 opportunity.imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: _primary),
+                errorBuilder: (_, _, _) => Container(color: _primary),
               ),
         DecoratedBox(
           decoration: BoxDecoration(
@@ -242,7 +245,19 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                     ),
                   ),
                 ),
+                // title fades in as the bar collapses (FlexibleSpaceBar's
+                // built-in behavior) so scrolled-down users still know which
+                // program they're looking at.
                 flexibleSpace: FlexibleSpaceBar(
+                  title: Text(
+                    opportunity.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   background: Hero(
                     tag: opportunity.id,
                     child: _buildHeroBackground(),
