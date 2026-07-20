@@ -1,0 +1,4 @@
+# Every file in this repo requires @KrishTrivedi025's review before a
+# pull request can merge into main — enforced when "Require review from
+# Code Owners" is checked on the main branch ruleset (Settings > Rules).
+* @KrishTrivedi025

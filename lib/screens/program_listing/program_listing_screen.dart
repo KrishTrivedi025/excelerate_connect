@@ -7,7 +7,6 @@ import '../../widgets/program_card.dart';
 /// Program Listing Screen — Week 2 Build
 /// 
 /// Features:
-/// - Search bar with live filtering
 /// - Category filter chips (All + 8 opportunity types)
 /// - Pull-to-refresh indicator
 /// - Animated list with staggered entrance
@@ -245,7 +244,6 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
   }
 
   /// Builds a category filter chip
-  /// FIXED: Now properly receives context parameter
   Widget _buildFilterChip(BuildContext context, String label, OpportunityType? type) {
     final isSelected = _selectedCategory == type;
     return Padding(
