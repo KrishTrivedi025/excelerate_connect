@@ -1242,8 +1242,32 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Home Tab
             _buildNavItem(Icons.home, 'Home', true),
-            // Explore Tab
-            _buildNavItem(Icons.grid_view, 'Explore', false),
+            // Explore Tab — navigates to Program Listing
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/programs'),
+              child: SizedBox(
+                width: 50,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(
+                      Icons.grid_view,
+                      color: AppColors.textSecondary,
+                      size: 22,
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Explore',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             
             // Syllabus index open-book button (Horizontally aligned inline for pixel-perfect neatness)
             GestureDetector(

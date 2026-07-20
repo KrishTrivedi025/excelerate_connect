@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
-import '../../widgets/primary_text_field.dart';
+import '../../widgets/bottom_wave.dart';
 import '../../widgets/password_field.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/primary_text_field.dart';
 import '../../widgets/social_button.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,8 +16,11 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  // Class-level so we don't rebuild these on every validator call.
+  static final RegExp _emailRegex =
+      RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$');
 
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -33,8 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'Email is required';
     }
-    final emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$');
-    if (!emailRegex.hasMatch(value.trim())) {
+    if (!_emailRegex.hasMatch(value.trim())) {
       return 'Enter a valid email address';
     }
     return null;
@@ -81,312 +84,272 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _handleForgotPassword() {
-    // TODO(auth): Navigate to forgot password flow when available.
-  }
-
-  void _handleGoogleLogin() {
-    // TODO(auth): Integrate Google sign-in.
-  }
-
-  void _handleAppleLogin() {
-    // TODO(auth): Integrate Apple sign-in.
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$feature — coming soon')),
+    );
   }
 
   void _navigateToSignup() {
     Navigator.pushNamed(context, AppRouter.signup);
   }
 
-  void _handleGetHelp() {
-    // TODO(support): Navigate to help/support screen when available.
-  }
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final viewInsets = MediaQuery.of(context).viewInsets;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: _BottomWave(color: AppColors.wave),
-            ),
-            SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: size.height,
-                    maxWidth: 440,
+      // Keep the wave pinned to the physical screen bottom when the keyboard
+      // opens instead of letting the layout shrink and drag it upward.
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: [
+          // Content — scrolls, respects the keyboard via bottom padding on the
+          // outer wrapper so focused fields still auto-scroll into view.
+          // bottom: BottomWave.height reserves the wave's strip so the
+          // scrollable viewport can never render content behind it, at any
+          // scroll position — not just when scrolled all the way down.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: BottomWave.height,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: viewInsets.bottom),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Padding(
-                        padding: EdgeInsets.only(top: AppSpacing.sm),
-                        child: GestureDetector(
-                          onTap: _handleGetHelp,
-                          child: RichText(
-                            text: TextSpan(
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.textSecondary,
-                                  ),
-                              children: [
-                                const TextSpan(text: 'Having issues? '),
-                                TextSpan(
-                                  text: 'Get Help',
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: size.height,
+                        maxWidth: 440,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: AppSpacing.xxl),
+                          Center(
+                            child: SizedBox(
+                              width: 90,
+                              height: 90,
+                              child: Center(
+                                child: Text(
+                                  'X',
                                   style: TextStyle(
+                                    fontSize: 72,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1,
                                     color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
                                   ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'Excelerate Connect',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Learn • Grow • Excel',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          Text(
+                            'Welcome Back 👋',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Sign in to continue your learning journey.',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                PrimaryTextField(
+                                  controller: _emailController,
+                                  labelText: 'Email Address',
+                                  hintText: 'Enter your email address',
+                                  keyboardType: TextInputType.emailAddress,
+                                  textInputAction: TextInputAction.next,
+                                  prefixIcon: Icons.mail_outline,
+                                  validator: _validateEmail,
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                PasswordField(
+                                  controller: _passwordController,
+                                  label: 'Password',
+                                  hintText: 'Enter your password',
+                                  textInputAction: TextInputAction.done,
+                                  validator: _validatePassword,
+                                ),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: _isLoading
+                                        ? null
+                                        : () => _showComingSoon(
+                                              'Forgot password',
+                                            ),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.primary,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: AppSpacing.xs,
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Forgot Password?',
+                                      style:
+                                          TextStyle(fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.sm),
+                                PrimaryButton(
+                                  label: 'Login',
+                                  isLoading: _isLoading,
+                                  onPressed: _isLoading ? null : _handleLogin,
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: AppSpacing.lg),
-                    Center(
-                      child: Container(
-                        width: 90,
-                        height: 90,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'X',
-                          style: TextStyle(
-                            fontSize: 72,
-                            fontWeight: FontWeight.w900,
-                            height: 1,
-                            color: AppColors.primary,
+                          const SizedBox(height: AppSpacing.xl),
+                          const _OrDivider(),
+                          const SizedBox(height: AppSpacing.lg),
+                          SocialButton(
+                            provider: SocialProvider.google,
+                            onPressed: _isLoading
+                                ? null
+                                : () => _showComingSoon('Google sign-in'),
                           ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Excelerate Connect',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
+                          const SizedBox(height: AppSpacing.md),
+                          SocialButton(
+                            provider: SocialProvider.apple,
+                            onPressed: _isLoading
+                                ? null
+                                : () => _showComingSoon('Apple sign-in'),
                           ),
-                    ),
-                    SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'Learn • Grow • Excel',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                    ),
-                    SizedBox(height: AppSpacing.xl),
-                    Text(
-                      'Welcome Back 👋',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                    ),
-                    SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'Sign in to continue your learning journey.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                    ),
-                    SizedBox(height: AppSpacing.xl),
-                    Form(
-                      key: _formKey,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          PrimaryTextField(
-                            controller: _emailController,
-                            labelText: 'Email Address',
-                            hintText: 'Enter your email address',
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
-                            prefixIcon: Icons.mail_outline,
-                            validator: _validateEmail,
-                          ),
-                          SizedBox(height: AppSpacing.md),
-                          PasswordField(
-                            controller: _passwordController,
-                            label: 'Password',
-                            hintText: 'Enter your password',
-                            textInputAction: TextInputAction.done,
-                            validator: _validatePassword,
-                          ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: _isLoading ? null : _handleForgotPassword,
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppColors.primary,
-                                padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                              ),
-                              child: const Text(
-                                'Forgot Password?',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: AppSpacing.sm),
-                          PrimaryButton(
-                            label: 'Login',
-                            isLoading: _isLoading,
-                            onPressed: _isLoading ? null : _handleLogin,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: AppSpacing.xl),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                            color: AppColors.divider,
-                            thickness: 1,
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                          child: Text(
-                            'OR',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Divider(
-                            color: AppColors.divider,
-                            thickness: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: AppSpacing.lg),
-                    SocialButton(
-                      provider: SocialProvider.google,
-                      onPressed: _isLoading ? null : _handleGoogleLogin,
-                    ),
-                    SizedBox(height: AppSpacing.md),
-                    SocialButton(
-                      provider: SocialProvider.apple,
-                      onPressed: _isLoading ? null : _handleAppleLogin,
-                    ),
-                    SizedBox(height: AppSpacing.xl),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Don't have an account? ",
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                        ),
-                        GestureDetector(
-                          onTap: _isLoading ? null : _navigateToSignup,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                          const SizedBox(height: AppSpacing.xl),
+                          // Wrap prevents overflow on narrow screens: falls
+                          // to a second line before it clips.
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
-                                'Create Account',
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                "Don't have an account? ",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
                               ),
-                              SizedBox(width: AppSpacing.xs / 2),
-                              Icon(
-                                Icons.arrow_forward,
-                                size: 16,
-                                color: AppColors.primary,
+                              GestureDetector(
+                                onTap: _isLoading ? null : _navigateToSignup,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Create Account',
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Icon(
+                                      Icons.arrow_forward,
+                                      size: 16,
+                                      color: AppColors.primary,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: AppSpacing.xl),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: AppSpacing.xl),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-          ],
-        ),
+          // Wave anchored to the physical screen bottom; ignored by hit-testing
+          // so it never intercepts taps on content that scrolls over it.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(
+              child: BottomWave(color: AppColors.wave),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Decorative curved wave positioned at the bottom of the login screen,
-/// matching the soft peach wave shown in the design.
-class _BottomWave extends StatelessWidget {
-  final Color color;
-
-  const _BottomWave({required this.color});
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: IgnorePointer(
-        child: SizedBox(
-          height: 90,
-          width: double.infinity,
-          child: CustomPaint(
-            painter: _WavePainter(color: color),
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(color: AppColors.divider, thickness: 1),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          child: Text(
+            'OR',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ),
-      ),
+        Expanded(
+          child: Divider(color: AppColors.divider, thickness: 1),
+        ),
+      ],
     );
-  }
-}
-
-class _WavePainter extends CustomPainter {
-  final Color color;
-
-  _WavePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color;
-    final path = Path();
-
-    path.moveTo(0, size.height * 0.55);
-    path.quadraticBezierTo(
-      size.width * 0.25,
-      size.height * 0.05,
-      size.width * 0.5,
-      size.height * 0.35,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.75,
-      size.height * 0.65,
-      size.width,
-      size.height * 0.15,
-    );
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _WavePainter oldDelegate) {
-    return oldDelegate.color != color;
   }
 }

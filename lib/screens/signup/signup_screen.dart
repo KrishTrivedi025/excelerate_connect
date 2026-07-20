@@ -1,10 +1,12 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
-import '../../widgets/primary_text_field.dart';
+import '../../widgets/bottom_wave.dart';
 import '../../widgets/password_field.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/primary_text_field.dart';
 import '../../widgets/social_button.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -15,21 +17,10 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  final TextEditingController _firstNameController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-
-  String? _selectedCountry;
-  double _passwordStrength = 0; // 0.0 - 1.0
-  String _passwordStrengthLabel = 'Weak';
-  bool _agreedToTerms = false;
-  bool _isLoading = false;
-  bool _showCountryError = false;
+  // Class-level so validators don't rebuild RegExps on every keystroke.
+  static final RegExp _emailRegex =
+      RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$');
+  static final RegExp _phoneRegex = RegExp(r'^\+?[0-9]{7,15}$');
 
   static const List<String> _countries = [
     'India',
@@ -44,15 +35,23 @@ class _SignupScreenState extends State<SignupScreen> {
     'New Zealand',
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _passwordController.addListener(_onPasswordChanged);
-  }
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
+  String? _selectedCountry;
+  bool _agreedToTerms = false;
+  bool _isLoading = false;
+  bool _showCountryError = false;
 
   @override
   void dispose() {
-    _passwordController.removeListener(_onPasswordChanged);
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
@@ -73,8 +72,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'Email is required';
     }
-    final emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$');
-    if (!emailRegex.hasMatch(value.trim())) {
+    if (!_emailRegex.hasMatch(value.trim())) {
       return 'Enter a valid email address';
     }
     return null;
@@ -84,8 +82,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'Phone number is required';
     }
-    final phoneRegex = RegExp(r'^\+?[0-9]{7,15}$');
-    if (!phoneRegex.hasMatch(value.trim().replaceAll(' ', ''))) {
+    if (!_phoneRegex.hasMatch(value.trim().replaceAll(' ', ''))) {
       return 'Enter a valid phone number';
     }
     return null;
@@ -111,51 +108,12 @@ class _SignupScreenState extends State<SignupScreen> {
     return null;
   }
 
-  void _onPasswordChanged() {
-    final value = _passwordController.text;
-    double strength = 0;
-    if (value.length >= 6) strength += 0.25;
-    if (value.length >= 10) strength += 0.15;
-    if (RegExp(r'[A-Z]').hasMatch(value)) strength += 0.2;
-    if (RegExp(r'[0-9]').hasMatch(value)) strength += 0.2;
-    if (RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(value)) strength += 0.2;
-    strength = strength.clamp(0.0, 1.0);
-
-    String label;
-    if (value.isEmpty) {
-      label = 'Weak';
-      strength = 0;
-    } else if (strength < 0.4) {
-      label = 'Weak';
-    } else if (strength < 0.75) {
-      label = 'Medium';
-    } else {
-      label = 'Strong';
-    }
-
-    setState(() {
-      _passwordStrength = strength;
-      _passwordStrengthLabel = label;
-    });
-  }
-
-  Color _strengthColor() {
-    switch (_passwordStrengthLabel) {
-      case 'Strong':
-        return AppColors.success;
-      case 'Medium':
-        return AppColors.accent;
-      default:
-        return AppColors.error;
-    }
-  }
-
   Future<void> _showCountryPicker() async {
     final selected = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.background,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.hero),
         ),
@@ -168,7 +126,7 @@ class _SignupScreenState extends State<SignupScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   child: Text(
                     'Select Country / Nationality',
                     textAlign: TextAlign.center,
@@ -181,7 +139,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 Expanded(
                   child: ListView.separated(
                     itemCount: _countries.length,
-                    separatorBuilder: (_, __) => Divider(
+                    separatorBuilder: (context, index) => const Divider(
                       height: 1,
                       color: AppColors.divider,
                     ),
@@ -190,7 +148,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       return ListTile(
                         title: Text(country),
                         trailing: _selectedCountry == country
-                            ? Icon(Icons.check, color: AppColors.primary)
+                            ? const Icon(Icons.check, color: AppColors.primary)
                             : null,
                         onTap: () => Navigator.pop(context, country),
                       );
@@ -216,7 +174,8 @@ class _SignupScreenState extends State<SignupScreen> {
     FocusScope.of(context).unfocus();
 
     final isFormValid = _formKey.currentState?.validate() ?? false;
-    final isCountryValid = _selectedCountry != null && _selectedCountry!.isNotEmpty;
+    final isCountryValid =
+        _selectedCountry != null && _selectedCountry!.isNotEmpty;
 
     setState(() => _showCountryError = !isCountryValid);
 
@@ -241,8 +200,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (!mounted) return;
 
-      // Per navigation flow: after successful signup, return to Login Screen.
-      Navigator.pop(context);
+      // Spec Section 4.2 / Navigation Map: successful sign-up lands on Home.
+      Navigator.pushReplacementNamed(context, AppRouter.home);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -258,359 +217,403 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  void _handleCancel() {
-    Navigator.pop(context);
-  }
-
-  void _handleGoogleSignup() {
-    // TODO(auth): Integrate Google sign-up.
-  }
-
-  void _handleAppleSignup() {
-    // TODO(auth): Integrate Apple sign-up.
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$feature — coming soon')),
+    );
   }
 
   void _navigateToLogin() {
     Navigator.pop(context);
   }
 
-  void _handleNeedHelp() {
-    // TODO(support): Navigate to help/support screen when available.
-  }
-
-  void _openTermsOfUse() {
-    // TODO(legal): Navigate to Terms of Use screen when available.
-  }
-
-  void _openPrivacyPolicy() {
-    // TODO(legal): Navigate to Privacy Policy screen when available.
-  }
-
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: size.height,
-                maxWidth: 440,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(height: AppSpacing.sm),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(
-                          Icons.arrow_back_ios_new,
-                          color: AppColors.textPrimary,
-                        ),
-                        padding: EdgeInsets.zero,
-                        alignment: Alignment.centerLeft,
-                      ),
-                      TextButton(
-                        onPressed: _handleNeedHelp,
-                        child: Text(
-                          'Need Help?',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: [
+          // Isolating the keyboard-driven padding here means opening the
+          // keyboard rebuilds only this small wrapper, not the whole form.
+          // bottom: BottomWave.height reserves the wave's strip so the
+          // scrollable viewport can never render content behind it, at any
+          // scroll position — not just when scrolled all the way down.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: BottomWave.height,
+            child: SafeArea(
+              bottom: false,
+              child: _KeyboardAvoidingPadding(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 44,
-                        height: 44,
-                        child: Center(
-                          child: Text(
-                            'X',
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.w900,
-                              height: 1,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: AppSpacing.xs),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Excelerate',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
-                                ),
-                          ),
-                          Text(
-                            'Learn • Grow • Excel',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: AppSpacing.lg),
-                  Text(
-                    'Create your account',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                  ),
-                  SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Join Excelerate and start your learning journey.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                  ),
-                  SizedBox(height: AppSpacing.lg),
-                  SocialButton(
-                    provider: SocialProvider.google,
-                    onPressed: _isLoading ? null : _handleGoogleSignup,
-                  ),
-                  SizedBox(height: AppSpacing.md),
-                  SocialButton(
-                    provider: SocialProvider.apple,
-                    onPressed: _isLoading ? null : _handleAppleSignup,
-                  ),
-                  SizedBox(height: AppSpacing.lg),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: AppColors.divider,
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                        child: Text(
-                          'OR',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: AppColors.divider,
-                          thickness: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: AppSpacing.lg),
-                  Form(
-                    key: _formKey,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        PrimaryTextField(
-                          controller: _firstNameController,
-                          labelText: 'First Name',
-                          hintText: 'First Name',
-                          textInputAction: TextInputAction.next,
-                          prefixIcon: Icons.person_outline,
-                          validator: (value) => _validateRequired(value, 'First name'),
-                        ),
-                        SizedBox(height: AppSpacing.md),
-                        PrimaryTextField(
-                          controller: _lastNameController,
-                          labelText: 'Last Name',
-                          hintText: 'Last Name',
-                          textInputAction: TextInputAction.next,
-                          prefixIcon: Icons.person_outline,
-                          validator: (value) => _validateRequired(value, 'Last name'),
-                        ),
-                        SizedBox(height: AppSpacing.md),
-                        PrimaryTextField(
-                          controller: _emailController,
-                          labelText: 'Email Address',
-                          hintText: 'Email Address',
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          prefixIcon: Icons.mail_outline,
-                          validator: _validateEmail,
-                        ),
-                        SizedBox(height: AppSpacing.md),
-                        PrimaryTextField(
-                          controller: _phoneController,
-                          labelText: 'Phone Number',
-                          hintText: 'Phone Number',
-                          keyboardType: TextInputType.phone,
-                          textInputAction: TextInputAction.next,
-                          prefixIcon: Icons.call_outlined,
-                          validator: _validatePhone,
-                        ),
-                        SizedBox(height: AppSpacing.md),
-                        _CountryField(
-                          label: _selectedCountry ?? 'Country / Nationality',
-                          isPlaceholder: _selectedCountry == null,
-                          errorText: _showCountryError
-                              ? 'Please select your country'
-                              : null,
-                          onTap: _showCountryPicker,
-                        ),
-                        SizedBox(height: AppSpacing.md),
-                        PasswordField(
-                          controller: _passwordController,
-                          label: 'Password',
-                          hintText: 'Password',
-                          textInputAction: TextInputAction.next,
-                          validator: _validatePassword,
-                        ),
-                        _PasswordStrengthMeter(
-                          strength: _passwordStrength,
-                          label: _passwordStrengthLabel,
-                          color: _strengthColor(),
-                          hasText: _passwordController.text.isNotEmpty,
-                        ),
-                        SizedBox(height: AppSpacing.md),
-                        PasswordField(
-                          controller: _confirmPasswordController,
-                          label: 'Confirm Password',
-                          hintText: 'Confirm Password',
-                          textInputAction: TextInputAction.done,
-                          validator: _validateConfirmPassword,
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: AppSpacing.md),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Checkbox(
-                          value: _agreedToTerms,
-                          activeColor: AppColors.primary,
-                          onChanged: (value) {
-                            setState(() => _agreedToTerms = value ?? false);
-                          },
-                        ),
-                      ),
-                      SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: RichText(
-                            text: TextSpan(
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.textSecondary,
-                                  ),
-                              children: [
-                                const TextSpan(text: 'I agree to the '),
-                                TextSpan(
-                                  text: 'Terms of Use',
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = _openTermsOfUse,
-                                ),
-                                const TextSpan(text: ' and '),
-                                TextSpan(
-                                  text: 'Privacy Policy',
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = _openPrivacyPolicy,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: AppSpacing.md),
-                  PrimaryButton(
-                    label: 'Create Account',
-                    isLoading: _isLoading,
-                    onPressed: _isLoading ? null : _handleCreateAccount,
-                  ),
-                  SizedBox(height: AppSpacing.md),
-                  OutlinedButton(
-                    onPressed: _isLoading ? null : _handleCancel,
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(52),
-                      side: BorderSide(color: AppColors.divider),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.button),
-                      ),
-                    ),
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 440),
+                      child: _SignupBody(
+                        formKey: _formKey,
+                        firstNameController: _firstNameController,
+                        lastNameController: _lastNameController,
+                        emailController: _emailController,
+                        phoneController: _phoneController,
+                        passwordController: _passwordController,
+                        confirmPasswordController: _confirmPasswordController,
+                        selectedCountry: _selectedCountry,
+                        showCountryError: _showCountryError,
+                        agreedToTerms: _agreedToTerms,
+                        isLoading: _isLoading,
+                        onValidateRequired: _validateRequired,
+                        onValidateEmail: _validateEmail,
+                        onValidatePhone: _validatePhone,
+                        onValidatePassword: _validatePassword,
+                        onValidateConfirmPassword: _validateConfirmPassword,
+                        onPickCountry: _showCountryPicker,
+                        onToggleTerms: (value) {
+                          setState(
+                            () => _agreedToTerms = value ?? false,
+                          );
+                        },
+                        onGoogleTap: () => _showComingSoon('Google sign-up'),
+                        onAppleTap: () => _showComingSoon('Apple sign-up'),
+                        onTermsTap: () => _showComingSoon('Terms of Use'),
+                        onPrivacyTap: () => _showComingSoon('Privacy Policy'),
+                        onSubmit: _handleCreateAccount,
+                        onCancel: _navigateToLogin,
+                        onSignInTap: _navigateToLogin,
                       ),
                     ),
                   ),
-                  SizedBox(height: AppSpacing.lg),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Already have an account? ',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                      ),
-                      GestureDetector(
-                        onTap: _isLoading ? null : _navigateToLogin,
-                        child: Text(
-                          'Sign In',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: AppSpacing.xl),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(
+              child: BottomWave(color: AppColors.wave),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Read-only field styled to match PrimaryTextField, used for the
-/// Country / Nationality picker since no dropdown widget exists yet
-/// in the shared widgets folder.
+/// Isolates MediaQuery.viewInsets so only this thin wrapper rebuilds when the
+/// keyboard opens/closes — the SingleChildScrollView tree passed as [child]
+/// stays untouched.
+class _KeyboardAvoidingPadding extends StatelessWidget {
+  final Widget child;
+  const _KeyboardAvoidingPadding({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: child,
+    );
+  }
+}
+
+/// The whole scrollable form, extracted so the parent State's build() stays
+/// short. Doesn't change behavior — it just makes the tree easier to read.
+class _SignupBody extends StatelessWidget {
+  final GlobalKey<FormState> formKey;
+  final TextEditingController firstNameController;
+  final TextEditingController lastNameController;
+  final TextEditingController emailController;
+  final TextEditingController phoneController;
+  final TextEditingController passwordController;
+  final TextEditingController confirmPasswordController;
+  final String? selectedCountry;
+  final bool showCountryError;
+  final bool agreedToTerms;
+  final bool isLoading;
+  final String? Function(String?, String) onValidateRequired;
+  final String? Function(String?) onValidateEmail;
+  final String? Function(String?) onValidatePhone;
+  final String? Function(String?) onValidatePassword;
+  final String? Function(String?) onValidateConfirmPassword;
+  final VoidCallback onPickCountry;
+  final ValueChanged<bool?> onToggleTerms;
+  final VoidCallback onGoogleTap;
+  final VoidCallback onAppleTap;
+  final VoidCallback onTermsTap;
+  final VoidCallback onPrivacyTap;
+  final VoidCallback onSubmit;
+  final VoidCallback onCancel;
+  final VoidCallback onSignInTap;
+
+  const _SignupBody({
+    required this.formKey,
+    required this.firstNameController,
+    required this.lastNameController,
+    required this.emailController,
+    required this.phoneController,
+    required this.passwordController,
+    required this.confirmPasswordController,
+    required this.selectedCountry,
+    required this.showCountryError,
+    required this.agreedToTerms,
+    required this.isLoading,
+    required this.onValidateRequired,
+    required this.onValidateEmail,
+    required this.onValidatePhone,
+    required this.onValidatePassword,
+    required this.onValidateConfirmPassword,
+    required this.onPickCountry,
+    required this.onToggleTerms,
+    required this.onGoogleTap,
+    required this.onAppleTap,
+    required this.onTermsTap,
+    required this.onPrivacyTap,
+    required this.onSubmit,
+    required this.onCancel,
+    required this.onSignInTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: AppSpacing.xl),
+        // Excelerate wordmark + tagline (no back arrow — Android system back
+        // and the "Sign In" link at the bottom still cover navigation).
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 44,
+              height: 44,
+              child: Center(
+                child: Text(
+                  'X',
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Excelerate',
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  'Learn • Grow • Excel',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Text(
+          'Create your account',
+          style: textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Join Excelerate and start your learning journey.',
+          style: textTheme.bodyMedium?.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        SocialButton(
+          provider: SocialProvider.google,
+          onPressed: isLoading ? null : onGoogleTap,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        SocialButton(
+          provider: SocialProvider.apple,
+          onPressed: isLoading ? null : onAppleTap,
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        const _OrDivider(),
+        const SizedBox(height: AppSpacing.lg),
+        Form(
+          key: formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PrimaryTextField(
+                controller: firstNameController,
+                labelText: 'First Name',
+                hintText: 'First Name',
+                textInputAction: TextInputAction.next,
+                prefixIcon: Icons.person_outline,
+                validator: (v) => onValidateRequired(v, 'First name'),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              PrimaryTextField(
+                controller: lastNameController,
+                labelText: 'Last Name',
+                hintText: 'Last Name',
+                textInputAction: TextInputAction.next,
+                prefixIcon: Icons.person_outline,
+                validator: (v) => onValidateRequired(v, 'Last name'),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              PrimaryTextField(
+                controller: emailController,
+                labelText: 'Email Address',
+                hintText: 'Email Address',
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                prefixIcon: Icons.mail_outline,
+                validator: onValidateEmail,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              PrimaryTextField(
+                controller: phoneController,
+                labelText: 'Phone Number',
+                hintText: 'Phone Number',
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
+                prefixIcon: Icons.call_outlined,
+                validator: onValidatePhone,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _CountryField(
+                label: selectedCountry ?? 'Country / Nationality',
+                isPlaceholder: selectedCountry == null,
+                errorText: showCountryError
+                    ? 'Please select your country'
+                    : null,
+                onTap: onPickCountry,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              PasswordField(
+                controller: passwordController,
+                label: 'Password',
+                hintText: 'Password',
+                textInputAction: TextInputAction.next,
+                validator: onValidatePassword,
+              ),
+              _PasswordStrengthMeter(controller: passwordController),
+              const SizedBox(height: AppSpacing.md),
+              PasswordField(
+                controller: confirmPasswordController,
+                label: 'Confirm Password',
+                hintText: 'Confirm Password',
+                textInputAction: TextInputAction.done,
+                validator: onValidateConfirmPassword,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _TermsRow(
+          value: agreedToTerms,
+          onChanged: onToggleTerms,
+          onTapTerms: onTermsTap,
+          onTapPrivacy: onPrivacyTap,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        PrimaryButton(
+          label: 'Create Account',
+          isLoading: isLoading,
+          onPressed: isLoading ? null : onSubmit,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        OutlinedButton(
+          onPressed: isLoading ? null : onCancel,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+            side: const BorderSide(color: AppColors.divider),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.button),
+            ),
+          ),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              'Already have an account? ',
+              style: textTheme.bodyMedium?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            GestureDetector(
+              onTap: isLoading ? null : onSignInTap,
+              child: Text(
+                'Sign In',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xl),
+      ],
+    );
+  }
+}
+
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: AppColors.divider, thickness: 1)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          child: Text(
+            'OR',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ),
+        const Expanded(child: Divider(color: AppColors.divider, thickness: 1)),
+      ],
+    );
+  }
+}
+
+/// Read-only field styled to match PrimaryTextField, opens a bottom sheet
+/// with the country list.
 class _CountryField extends StatelessWidget {
   final String label;
   final bool isPlaceholder;
@@ -645,11 +648,11 @@ class _CountryField extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.public,
                   color: AppColors.textSecondary,
                 ),
-                SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     label,
@@ -657,12 +660,13 @@ class _CountryField extends StatelessWidget {
                       color: isPlaceholder
                           ? AppColors.textSecondary
                           : AppColors.textPrimary,
-                      fontWeight: isPlaceholder ? FontWeight.normal : FontWeight.w600,
+                      fontWeight:
+                          isPlaceholder ? FontWeight.normal : FontWeight.w600,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(
+                const Icon(
                   Icons.keyboard_arrow_down,
                   color: AppColors.textSecondary,
                 ),
@@ -683,24 +687,176 @@ class _CountryField extends StatelessWidget {
   }
 }
 
-/// Segmented password-strength indicator shown below the password field.
-class _PasswordStrengthMeter extends StatelessWidget {
-  final double strength;
-  final String label;
-  final Color color;
-  final bool hasText;
+/// Checkbox + rich text on one baseline. Uses CrossAxisAlignment.center and
+/// a compact tap-target checkbox so the two align cleanly.
+class _TermsRow extends StatefulWidget {
+  final bool value;
+  final ValueChanged<bool?> onChanged;
+  final VoidCallback onTapTerms;
+  final VoidCallback onTapPrivacy;
 
-  const _PasswordStrengthMeter({
-    required this.strength,
-    required this.label,
-    required this.color,
-    required this.hasText,
+  const _TermsRow({
+    required this.value,
+    required this.onChanged,
+    required this.onTapTerms,
+    required this.onTapPrivacy,
   });
+
+  @override
+  State<_TermsRow> createState() => _TermsRowState();
+}
+
+class _TermsRowState extends State<_TermsRow> {
+  // Recognizers persist across rebuilds so we don't leak them each frame.
+  late final TapGestureRecognizer _termsRecognizer;
+  late final TapGestureRecognizer _privacyRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsRecognizer = TapGestureRecognizer()..onTap = widget.onTapTerms;
+    _privacyRecognizer = TapGestureRecognizer()..onTap = widget.onTapPrivacy;
+  }
+
+  @override
+  void didUpdateWidget(covariant _TermsRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _termsRecognizer.onTap = widget.onTapTerms;
+    _privacyRecognizer.onTap = widget.onTapPrivacy;
+  }
+
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Checkbox(
+          value: widget.value,
+          activeColor: AppColors.primary,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+          onChanged: widget.onChanged,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+              children: [
+                const TextSpan(text: 'I agree to the '),
+                TextSpan(
+                  text: 'Terms of Use',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  recognizer: _termsRecognizer,
+                ),
+                const TextSpan(text: ' and '),
+                TextSpan(
+                  text: 'Privacy Policy',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  recognizer: _privacyRecognizer,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Own StatefulWidget listening to the password controller directly so
+/// keystrokes rebuild only this small meter, not the whole signup form.
+class _PasswordStrengthMeter extends StatefulWidget {
+  final TextEditingController controller;
+
+  const _PasswordStrengthMeter({required this.controller});
+
+  @override
+  State<_PasswordStrengthMeter> createState() =>
+      _PasswordStrengthMeterState();
+}
+
+class _PasswordStrengthMeterState extends State<_PasswordStrengthMeter> {
+  static final RegExp _hasUpper = RegExp(r'[A-Z]');
+  static final RegExp _hasDigit = RegExp(r'[0-9]');
+  static final RegExp _hasSymbol = RegExp(r'[!@#\$%^&*(),.?":{}|<>]');
+
+  double _strength = 0;
+  String _label = 'Weak';
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_recalculate);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_recalculate);
+    super.dispose();
+  }
+
+  void _recalculate() {
+    final value = widget.controller.text;
+    double strength = 0;
+    if (value.length >= 6) strength += 0.25;
+    if (value.length >= 10) strength += 0.15;
+    if (_hasUpper.hasMatch(value)) strength += 0.2;
+    if (_hasDigit.hasMatch(value)) strength += 0.2;
+    if (_hasSymbol.hasMatch(value)) strength += 0.2;
+    strength = strength.clamp(0.0, 1.0);
+
+    String label;
+    if (value.isEmpty) {
+      label = 'Weak';
+      strength = 0;
+    } else if (strength < 0.4) {
+      label = 'Weak';
+    } else if (strength < 0.75) {
+      label = 'Medium';
+    } else {
+      label = 'Strong';
+    }
+
+    if (strength != _strength || label != _label) {
+      setState(() {
+        _strength = strength;
+        _label = label;
+      });
+    }
+  }
+
+  Color get _color {
+    switch (_label) {
+      case 'Strong':
+        return AppColors.success;
+      case 'Medium':
+        return AppColors.accent;
+      default:
+        return AppColors.error;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     const segmentCount = 5;
-    final filledSegments = (strength * segmentCount).round();
+    final filledSegments = (_strength * segmentCount).round();
+    final hasText = widget.controller.text.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -717,7 +873,7 @@ class _PasswordStrengthMeter extends StatelessWidget {
                   ),
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isFilled ? color : AppColors.divider,
+                    color: isFilled ? _color : AppColors.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -734,8 +890,11 @@ class _PasswordStrengthMeter extends StatelessWidget {
                     ),
                 children: [
                   TextSpan(
-                    text: label,
-                    style: TextStyle(color: color, fontWeight: FontWeight.w600),
+                    text: _label,
+                    style: TextStyle(
+                      color: _color,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -745,4 +904,4 @@ class _PasswordStrengthMeter extends StatelessWidget {
       ),
     );
   }
-} 
+}

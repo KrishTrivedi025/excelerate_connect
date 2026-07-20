@@ -29,8 +29,6 @@ class AppColors {
   static const Color wave = Color(0xFFFFE5D0);
 }
 
-  
-
 /// Spacing scale — spec Section 3.3. Use these values only.
 class AppSpacing {
   const AppSpacing._();
