@@ -1,47 +1,7 @@
-// import 'package:flutter/material.dart';
-
-// class HomeScreen extends StatefulWidget {
-//   const HomeScreen({super.key});
-
-//   @override
-//   State<HomeScreen> createState() => _HomeScreenState();
-// }
-
-// class _HomeScreenState extends State<HomeScreen> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return const Scaffold(
-//       body: Center(child: Text('Home Screen')),
-//     );
-//   }
-// }
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const HomeScreen());
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Excelerate',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Inter',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFF97316),
-          primary: const Color(0xFFF97316),
-          background: const Color(0xFFFAFAFA),
-        ),
-        useMaterial3: true,
-      ),
-      home: const HomeScreenA(),
-    );
-  }
-}
+import '../../core/theme/app_theme.dart';
 
 // Data Model for Course Cards
 class Course {
@@ -66,23 +26,51 @@ class Course {
   });
 }
 
-class HomeScreenA extends StatefulWidget {
-  const HomeScreenA({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<HomeScreenA> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreenA> {
+class _HomeScreenState extends State<HomeScreen> {
   String selectedCategory = 'All';
   String searchQuery = '';
   int notificationCount = 3;
   int completedLessons = 12;
   final int totalLessons = 20;
 
-  // Bookmarked course IDs
+  // Bookmarked course IDs — the Flutter Development course (id 1) is also
+  // bookmarkable from the Continue Learning card, so this single set backs
+  // both the featured list and that card's bookmark toggle.
   final Set<int> bookmarkedCourseIds = {2};
-  bool isFlutterBookmarked = false;
+
+  // Indices into _lessonTitles/_lessonDurations that are marked complete in
+  // the syllabus sheet. Tracked per-lesson so tapping one row only ever
+  // toggles that row.
+  final Set<int> completedLessonIndices = {0, 1, 2, 3, 4, 5};
+
+  static const List<String> _lessonTitles = [
+    'Introduction to Flutter & Widgets',
+    'Building Beautiful Interfaces with Row & Column',
+    'Understanding Stateless vs Stateful Widgets',
+    'Mastering Theme and Global Colors',
+    'Custom Paints & Particle Effects',
+    'Local Storage and App State Lifecycle',
+    'Async Network Calls & API Integration',
+    'Deploying to App Store and Google Play',
+  ];
+
+  static const List<String> _lessonDurations = [
+    '15 mins',
+    '22 mins',
+    '18 mins',
+    '25 mins',
+    '30 mins',
+    '20 mins',
+    '28 mins',
+    '35 mins',
+  ];
 
   final List<String> categories = [
     'All',
@@ -284,7 +272,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF97316),
+                          color: AppColors.primary,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 1.5),
                         ),
@@ -314,14 +302,22 @@ class _HomeScreenState extends State<HomeScreenA> {
               child: Container(
                 width: 44,
                 height: 44,
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-                  image: const DecorationImage(
-                    image: NetworkImage(
+                  border: Border.all(color: AppColors.divider, width: 1),
+                ),
+                child: CachedNetworkImage(
+                  imageUrl:
                       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(color: AppColors.divider),
+                  errorWidget: (context, url, error) => Container(
+                    color: AppColors.divider,
+                    child: const Icon(
+                      Icons.person_outline,
+                      color: AppColors.textSecondary,
                     ),
-                    fit: BoxFit.cover,
                   ),
                 ),
               ),
@@ -345,7 +341,7 @@ class _HomeScreenState extends State<HomeScreenA> {
               width: 10,
               height: 32,
               decoration: BoxDecoration(
-                color: const Color(0xFFF97316),
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -358,7 +354,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                 width: 10,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF97316),
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -381,13 +377,12 @@ class _HomeScreenState extends State<HomeScreenA> {
               fontWeight: FontWeight.bold,
               color: Color(0xFF1A1A1A),
               letterSpacing: -0.5,
-              fontFamily: 'Inter',
             ),
             children: [
               TextSpan(text: 'Hello, '),
               TextSpan(
                 text: 'Learner!',
-                style: TextStyle(color: Color(0xFFF97316)),
+                style: TextStyle(color: AppColors.primary),
               ),
               TextSpan(text: ' 👋'),
             ],
@@ -398,7 +393,7 @@ class _HomeScreenState extends State<HomeScreenA> {
           'Keep learning, keep growing.',
           style: TextStyle(
             fontSize: 14,
-            color: Color(0xFF6B7280),
+            color: AppColors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         )
@@ -426,7 +421,7 @@ class _HomeScreenState extends State<HomeScreenA> {
         children: [
           const Icon(
             Icons.search,
-            color: Color(0xFF6B7280),
+            color: AppColors.textSecondary,
             size: 22,
           ),
           const SizedBox(width: 10),
@@ -492,13 +487,13 @@ class _HomeScreenState extends State<HomeScreenA> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFF97316),
+                  color: AppColors.primary,
                 ),
               ),
               Icon(
                 Icons.chevron_right,
                 size: 16,
-                color: Color(0xFFF97316),
+                color: AppColors.primary,
               )
             ],
           ),
@@ -510,6 +505,9 @@ class _HomeScreenState extends State<HomeScreenA> {
   // Peach Highlighted card detailing Flutter Course progress
   Widget _buildContinueLearningCard() {
     final double progressRatio = completedLessons / totalLessons;
+    // Flutter Development is course id 1 — share bookmark state with the
+    // Featured Programs list instead of tracking it separately.
+    final bool isFlutterBookmarked = bookmarkedCourseIds.contains(1);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -519,7 +517,7 @@ class _HomeScreenState extends State<HomeScreenA> {
         border: Border.all(color: const Color(0xFFFBE3D1).withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFF97316).withValues(alpha: 0.04),
+            color: AppColors.primary.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 4),
           )
@@ -578,7 +576,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFFF97316),
+                        color: AppColors.primary,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -597,7 +595,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                       'Build beautiful cross-platform apps with Flutter',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF6B7280),
+                        color: AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
                         height: 1.3,
                       ),
@@ -613,7 +611,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                         child: LinearProgressIndicator(
                           value: progressRatio,
                           backgroundColor: Colors.white,
-                          color: const Color(0xFFF97316),
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
@@ -626,7 +624,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF6B7280),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                         // Resume Pill Action Button
@@ -635,11 +633,11 @@ class _HomeScreenState extends State<HomeScreenA> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF97316),
+                              color: AppColors.primary,
                               borderRadius: BorderRadius.circular(100),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFF97316).withValues(alpha: 0.25),
+                                  color: AppColors.primary.withValues(alpha: 0.25),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 )
@@ -679,10 +677,14 @@ class _HomeScreenState extends State<HomeScreenA> {
             child: GestureDetector(
               onTap: () {
                 setState(() {
-                  isFlutterBookmarked = !isFlutterBookmarked;
+                  if (isFlutterBookmarked) {
+                    bookmarkedCourseIds.remove(1);
+                  } else {
+                    bookmarkedCourseIds.add(1);
+                  }
                 });
                 _showSnackBar(
-                  isFlutterBookmarked ? 'Flutter course bookmarked! 🌟' : 'Removed bookmark',
+                  !isFlutterBookmarked ? 'Flutter course bookmarked! 🌟' : 'Removed bookmark',
                 );
               },
               child: Container(
@@ -701,7 +703,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                 child: Icon(
                   isFlutterBookmarked ? Icons.bookmark : Icons.bookmark_border_outlined,
                   size: 16,
-                  color: isFlutterBookmarked ? const Color(0xFFF97316) : const Color(0xFF1A1A1A),
+                  color: isFlutterBookmarked ? AppColors.primary : const Color(0xFF1A1A1A),
                 ),
               ),
             ),
@@ -749,13 +751,13 @@ class _HomeScreenState extends State<HomeScreenA> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFF97316),
+                  color: AppColors.primary,
                 ),
               ),
               Icon(
                 Icons.chevron_right,
                 size: 16,
-                color: Color(0xFFF97316),
+                color: AppColors.primary,
               )
             ],
           ),
@@ -800,13 +802,13 @@ class _HomeScreenState extends State<HomeScreenA> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(100),
                   border: Border.all(
-                    color: isActive ? const Color(0xFFF97316) : const Color(0xFFE5E7EB),
+                    color: isActive ? AppColors.primary : AppColors.divider,
                     width: isActive ? 1.5 : 1,
                   ),
                   boxShadow: [
                     if (isActive)
                       BoxShadow(
-                        color: const Color(0xFFF97316).withValues(alpha: 0.06),
+                        color: AppColors.primary.withValues(alpha: 0.06),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       )
@@ -817,7 +819,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                     Icon(
                       iconData,
                       size: 14,
-                      color: isActive ? const Color(0xFFF97316) : const Color(0xFF6B7280),
+                      color: isActive ? AppColors.primary : AppColors.textSecondary,
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -825,7 +827,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: isActive ? const Color(0xFFF97316) : const Color(0xFF1A1A1A),
+                        color: isActive ? AppColors.primary : const Color(0xFF1A1A1A),
                       ),
                     ),
                   ],
@@ -860,13 +862,13 @@ class _HomeScreenState extends State<HomeScreenA> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFF97316),
+                  color: AppColors.primary,
                 ),
               ),
               Icon(
                 Icons.chevron_right,
                 size: 16,
-                color: Color(0xFFF97316),
+                color: AppColors.primary,
               )
             ],
           ),
@@ -919,7 +921,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                       course.subtitle,
                       style: const TextStyle(
                         fontSize: 12.5,
-                        color: Color(0xFF6B7280),
+                        color: AppColors.textSecondary,
                         height: 1.2,
                       ),
                       maxLines: 1,
@@ -932,14 +934,14 @@ class _HomeScreenState extends State<HomeScreenA> {
                         const Icon(
                           Icons.school_outlined,
                           size: 14,
-                          color: Color(0xFF6B7280),
+                          color: AppColors.textSecondary,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           course.level,
                           style: const TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF6B7280),
+                            color: AppColors.textSecondary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -956,14 +958,13 @@ class _HomeScreenState extends State<HomeScreenA> {
                               fontSize: 12,
                               color: Color(0xFF1A1A1A),
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Inter',
                             ),
                             children: [
                               TextSpan(text: '${course.rating} '),
                               TextSpan(
                                 text: '(${course.reviewsCount})',
                                 style: const TextStyle(
-                                  color: Color(0xFF6B7280),
+                                  color: AppColors.textSecondary,
                                   fontWeight: FontWeight.normal,
                                 ),
                               )
@@ -1011,7 +1012,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                 child: Icon(
                   isBookmarked ? Icons.bookmark : Icons.bookmark_border_outlined,
                   size: 14,
-                  color: isBookmarked ? const Color(0xFFF97316) : const Color(0xFF1A1A1A),
+                  color: isBookmarked ? AppColors.primary : const Color(0xFF1A1A1A),
                 ),
               ),
             ),
@@ -1189,10 +1190,10 @@ class _HomeScreenState extends State<HomeScreenA> {
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFF97316), width: 2),
+            border: Border.all(color: AppColors.primary, width: 2),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFF97316).withValues(alpha: 0.25),
+                color: AppColors.primary.withValues(alpha: 0.25),
                 blurRadius: 20,
                 offset: const Offset(0, 6),
               )
@@ -1201,7 +1202,7 @@ class _HomeScreenState extends State<HomeScreenA> {
           padding: const EdgeInsets.all(3),
           child: Container(
             decoration: const BoxDecoration(
-              color: Color(0xFFF97316),
+              color: AppColors.primary,
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -1251,11 +1252,11 @@ class _HomeScreenState extends State<HomeScreenA> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF97316),
+                  color: AppColors.primary,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFF97316).withValues(alpha: 0.22),
+                      color: AppColors.primary.withValues(alpha: 0.22),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     )
@@ -1281,8 +1282,8 @@ class _HomeScreenState extends State<HomeScreenA> {
 
   // Navigation Item Builder helper
   Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    final activeColor = const Color(0xFFF97316);
-    final inactiveColor = const Color(0xFF6B7280);
+    final activeColor = AppColors.primary;
+    final inactiveColor = AppColors.textSecondary;
 
     return GestureDetector(
       onTap: () => _showSnackBar('$label feed loaded successfully'),
@@ -1332,7 +1333,7 @@ class _HomeScreenState extends State<HomeScreenA> {
             ),
             child: const Icon(
               Icons.search_off,
-              color: Color(0xFFF97316),
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(height: 12),
@@ -1349,7 +1350,7 @@ class _HomeScreenState extends State<HomeScreenA> {
             'We couldn\'t find matches for "$searchQuery" in this category.',
             style: const TextStyle(
               fontSize: 12,
-              color: Color(0xFF6B7280),
+              color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1364,7 +1365,7 @@ class _HomeScreenState extends State<HomeScreenA> {
             child: const Text(
               'Clear searches & filter',
               style: TextStyle(
-                color: Color(0xFFF97316),
+                color: AppColors.primary,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),
@@ -1405,7 +1406,9 @@ class _HomeScreenState extends State<HomeScreenA> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            final double progressRatio = completedLessons / totalLessons;
+            final int doneCount = completedLessonIndices.length;
+            final int lessonCount = _lessonTitles.length;
+            final double progressRatio = doneCount / lessonCount;
             return Container(
               height: MediaQuery.of(context).size.height * 0.75,
               decoration: const BoxDecoration(
@@ -1450,7 +1453,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                               'Flutter Mobile Development',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF6B7280),
+                                color: AppColors.textSecondary,
                               ),
                             )
                           ],
@@ -1481,11 +1484,11 @@ class _HomeScreenState extends State<HomeScreenA> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFFF97316),
+                                color: AppColors.primary,
                               ),
                             ),
                             Text(
-                              '${(progressRatio * 100).toInt()}% ($completedLessons/$totalLessons)',
+                              '${(progressRatio * 100).toInt()}% ($doneCount/$lessonCount)',
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -1502,7 +1505,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                             child: LinearProgressIndicator(
                               value: progressRatio,
                               backgroundColor: Colors.white,
-                              color: const Color(0xFFF97316),
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
@@ -1513,29 +1516,9 @@ class _HomeScreenState extends State<HomeScreenA> {
                   Expanded(
                     child: ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                      itemCount: 8,
+                      itemCount: lessonCount,
                       itemBuilder: (context, idx) {
-                        final titles = [
-                          'Introduction to Flutter & Widgets',
-                          'Building Beautiful Interfaces with Row & Column',
-                          'Understanding Stateless vs Stateful Widgets',
-                          'Mastering Theme and Global Colors',
-                          'Custom Paints & Particle Effects',
-                          'Local Storage and App State Lifecycle',
-                          'Async Network Calls & API Integration',
-                          'Deploying to App Store and Google Play'
-                        ];
-                        final durations = [
-                          '15 mins',
-                          '22 mins',
-                          '18 mins',
-                          '25 mins',
-                          '30 mins',
-                          '20 mins',
-                          '28 mins',
-                          '35 mins'
-                        ];
-                        final isDone = idx < (completedLessons - 6);
+                        final isDone = completedLessonIndices.contains(idx);
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
@@ -1543,9 +1526,9 @@ class _HomeScreenState extends State<HomeScreenA> {
                             onTap: () {
                               setState(() {
                                 if (isDone) {
-                                  completedLessons = completedLessons > 10 ? completedLessons - 1 : 10;
+                                  completedLessonIndices.remove(idx);
                                 } else {
-                                  completedLessons = completedLessons < 20 ? completedLessons + 1 : 20;
+                                  completedLessonIndices.add(idx);
                                 }
                               });
                               setSheetState(() {});
@@ -1564,13 +1547,13 @@ class _HomeScreenState extends State<HomeScreenA> {
                                 children: [
                                   CircleAvatar(
                                     radius: 12,
-                                    backgroundColor: isDone ? const Color(0xFFF97316) : const Color(0xFFF3F4F6),
+                                    backgroundColor: isDone ? AppColors.primary : const Color(0xFFF3F4F6),
                                     child: Text(
                                       '${idx + 1}',
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
-                                        color: isDone ? Colors.white : const Color(0xFF6B7280),
+                                        color: isDone ? Colors.white : AppColors.textSecondary,
                                       ),
                                     ),
                                   ),
@@ -1580,7 +1563,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          titles[idx],
+                                          _lessonTitles[idx],
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
@@ -1590,15 +1573,15 @@ class _HomeScreenState extends State<HomeScreenA> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          durations[idx],
-                                          style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                                          _lessonDurations[idx],
+                                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                                         ),
                                       ],
                                     ),
                                   ),
                                   Icon(
                                     isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-                                    color: isDone ? const Color(0xFFF97316) : const Color(0xFFD1D5DB),
+                                    color: isDone ? AppColors.primary : const Color(0xFFD1D5DB),
                                     size: 20,
                                   )
                                 ],
@@ -1627,7 +1610,7 @@ class _HomeScreenState extends State<HomeScreenA> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Row(
             children: const [
-              Icon(Icons.smart_toy_outlined, color: Color(0xFFF97316)),
+              Icon(Icons.smart_toy_outlined, color: AppColors.primary),
               SizedBox(width: 10),
               Text(
                 'Excelerate AI Guide',
@@ -1642,7 +1625,7 @@ class _HomeScreenState extends State<HomeScreenA> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Color(0xFF6B7280))),
+              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -1650,7 +1633,7 @@ class _HomeScreenState extends State<HomeScreenA> {
                 _showLessonsSheet(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF97316),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
               ),
