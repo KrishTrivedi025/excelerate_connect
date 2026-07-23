@@ -25,16 +25,17 @@ class AppRouter {
     final builder = _builderForRoute(settings);
     if (builder == null) return _notFound(settings.name);
     return _tabRoutes.contains(settings.name)
-        ? _tabPage(builder)
-        : _page(builder);
+        ? _tabPage(builder, settings)
+        : _page(builder, settings);
   }
 
   /// Switches between bottom-nav tabs. Uses pushReplacement (tabs are peers,
   /// not a navigation stack) with the shared slide+fade transition.
   static void goToTab(BuildContext context, String routeName) {
-    final builder = _builderForRoute(RouteSettings(name: routeName));
+    final settings = RouteSettings(name: routeName);
+    final builder = _builderForRoute(settings);
     if (builder == null) return;
-    Navigator.of(context).pushReplacement(_tabPage(builder));
+    Navigator.of(context).pushReplacement(_tabPage(builder, settings));
   }
 
   static WidgetBuilder? _builderForRoute(RouteSettings settings) {
@@ -50,30 +51,39 @@ class AppRouter {
       case programDetails:
         if (settings.arguments is! Opportunity) return null;
         return (_) => ProgramDetailsScreen(
-              opportunity: settings.arguments as Opportunity,
-            );
+          opportunity: settings.arguments as Opportunity,
+        );
       default:
         return null;
     }
   }
 
-  static MaterialPageRoute<void> _page(WidgetBuilder builder) =>
-      MaterialPageRoute(builder: builder);
+  static MaterialPageRoute<void> _page(
+    WidgetBuilder builder,
+    RouteSettings settings,
+  ) => MaterialPageRoute(builder: builder, settings: settings);
 
-  static PageRouteBuilder<void> _tabPage(WidgetBuilder builder) {
+  static PageRouteBuilder<void> _tabPage(
+    WidgetBuilder builder,
+    RouteSettings settings,
+  ) {
     return PageRouteBuilder<void>(
-      pageBuilder: (context, animation, secondaryAnimation) =>
-          builder(context),
+      settings: settings,
+      pageBuilder: (context, animation, secondaryAnimation) => builder(context),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         return FadeTransition(
           opacity: animation,
           child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0.04, 0),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-            ),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0.04, 0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
             child: child,
           ),
         );
@@ -83,10 +93,8 @@ class AppRouter {
   }
 
   static MaterialPageRoute<void> _notFound(String? name) => MaterialPageRoute(
-        builder: (_) => Scaffold(
-          body: Center(
-            child: Text('Route not found: ${name ?? 'unknown'}'),
-          ),
-        ),
-      );
+    builder: (_) => Scaffold(
+      body: Center(child: Text('Route not found: ${name ?? 'unknown'}')),
+    ),
+  );
 }

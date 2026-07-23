@@ -109,95 +109,104 @@ class _HomeScreenState extends State<HomeScreen> {
     final filteredPrograms = mockOpportunities.where((program) {
       final matchesCategory =
           selectedCategory == null || program.type == selectedCategory;
-      final matchesSearch =
-          program.name.toLowerCase().contains(searchQuery.toLowerCase());
+      final matchesSearch = program.name.toLowerCase().contains(
+        searchQuery.toLowerCase(),
+      );
       return matchesCategory && matchesSearch;
     }).toList();
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      // Without this, the Scaffold shrinks its body when the keyboard opens,
-      // which drags the Positioned(bottom:0) nav bar up to float above the
-      // keyboard instead of staying pinned to the physical screen bottom.
-      resizeToAvoidBottomInset: false,
-      body: SafeArea(
-        bottom: false,
-        child: Stack(
-          children: [
-            CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                      vertical: AppSpacing.sm,
-                    ),
-                    child: TopHeaderBar(
-                      notificationCount: notificationCount,
-                      onNotificationTap: () {
-                        setState(() => notificationCount = 0);
-                        _showSnackBar('Notifications marked as read!');
-                      },
-                      onProfileTap: () =>
-                          _showSnackBar('Account profile menu! 👤'),
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  // Full width, edge-to-edge — no side padding, no
-                  // overlaid text, just the hero image as a plain
-                  // rectangle (the image already carries its own copy).
-                  child: HeroBanner(
-                    image: FlexibleAssetImage(
-                      baseName: 'assets/images/home_hero',
-                      fit: BoxFit.cover,
-                      // Anchors the crop to the top of the image instead of
-                      // centering it, so any necessary cropping trims the
-                      // bottom rather than cutting into the top content.
-                      alignment: Alignment.topCenter,
-                      fallback: (context) =>
-                          const ColoredBox(color: AppColors.primary),
+    return PopScope(
+      // Home is the app's root tab (Login/Sign-Up were replaced, not pushed,
+      // on the way here) — there is nothing beneath it to pop back to, so
+      // system back must stay on Home instead of falling through to
+      // Flutter's "nothing left to pop" handling.
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        // Without this, the Scaffold shrinks its body when the keyboard opens,
+        // which drags the Positioned(bottom:0) nav bar up to float above the
+        // keyboard instead of staying pinned to the physical screen bottom.
+        resizeToAvoidBottomInset: false,
+        body: SafeArea(
+          bottom: false,
+          child: Stack(
+            children: [
+              CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.sm,
+                      ),
+                      child: TopHeaderBar(
+                        notificationCount: notificationCount,
+                        onNotificationTap: () {
+                          setState(() => notificationCount = 0);
+                          _showSnackBar('Notifications marked as read!');
+                        },
+                        onProfileTap: () =>
+                            _showSnackBar('Account profile menu! 👤'),
+                      ),
                     ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: AppSpacing.lg),
-                        _buildGreeting(),
-                        const SizedBox(height: AppSpacing.base),
-                        _buildSearchBar(),
-                        const SizedBox(height: AppSpacing.lg),
-                        _buildContinueLearningHeader(),
-                        const SizedBox(height: AppSpacing.sm),
-                        _buildContinueLearningSection(),
-                        const SizedBox(height: AppSpacing.xl),
-                        _buildAnnouncementsSection(),
-                        const SizedBox(height: AppSpacing.xl),
-                        _buildExploreProgramsHeader(),
-                        const SizedBox(height: AppSpacing.sm),
-                        _buildCategoryFilterPills(),
-                        const SizedBox(height: AppSpacing.lg),
-                        _buildFeaturedProgramsHeader(),
-                        const SizedBox(height: AppSpacing.sm),
-                      ],
+                  SliverToBoxAdapter(
+                    // Full width, edge-to-edge — no side padding, no
+                    // overlaid text, just the hero image as a plain
+                    // rectangle (the image already carries its own copy).
+                    child: HeroBanner(
+                      image: FlexibleAssetImage(
+                        baseName: 'assets/images/home_hero',
+                        fit: BoxFit.cover,
+                        // Anchors the crop to the top of the image instead of
+                        // centering it, so any necessary cropping trims the
+                        // bottom rather than cutting into the top content.
+                        alignment: Alignment.topCenter,
+                        fallback: (context) =>
+                            const ColoredBox(color: AppColors.primary),
+                      ),
                     ),
                   ),
-                ),
-                filteredPrograms.isNotEmpty
-                    ? SliverPadding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: AppSpacing.lg),
+                          _buildGreeting(),
+                          const SizedBox(height: AppSpacing.base),
+                          _buildSearchBar(),
+                          const SizedBox(height: AppSpacing.lg),
+                          _buildContinueLearningHeader(),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildContinueLearningSection(),
+                          const SizedBox(height: AppSpacing.xl),
+                          _buildAnnouncementsSection(),
+                          const SizedBox(height: AppSpacing.xl),
+                          _buildExploreProgramsHeader(),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildCategoryFilterPills(),
+                          const SizedBox(height: AppSpacing.lg),
+                          _buildFeaturedProgramsHeader(),
+                          const SizedBox(height: AppSpacing.sm),
+                        ],
+                      ),
+                    ),
+                  ),
+                  filteredPrograms.isNotEmpty
+                      ? SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                          ),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
                               final program = filteredPrograms[index];
                               return Padding(
                                 padding: const EdgeInsets.only(
@@ -205,22 +214,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 child: _buildFeaturedProgramCard(program),
                               );
-                            },
-                            childCount: filteredPrograms.length,
+                            }, childCount: filteredPrograms.length),
                           ),
-                        ),
-                      )
-                    : SliverToBoxAdapter(child: _buildEmptyState()),
-                const SliverToBoxAdapter(child: SizedBox(height: 120)),
-              ],
-            ),
-            AiChatButton(
-              showHint: _showChatHint,
-              onDismissHint: () => setState(() => _showChatHint = false),
-              onTap: () => _showChatbotDialog(context),
-            ),
-            const BottomNavBar(activeTab: AppTab.home),
-          ],
+                        )
+                      : SliverToBoxAdapter(child: _buildEmptyState()),
+                  const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                ],
+              ),
+              AiChatButton(
+                showHint: _showChatHint,
+                onDismissHint: () => setState(() => _showChatHint = false),
+                onTap: () => _showChatbotDialog(context),
+              ),
+              const BottomNavBar(activeTab: AppTab.home),
+            ],
+          ),
         ),
       ),
     );
@@ -269,7 +277,10 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: AppColors.divider.withValues(alpha: 0.3)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 2,
+      ),
       child: Row(
         children: [
           const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
@@ -280,8 +291,8 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: InputDecoration(
                 hintText: 'Search programs, skills, or topics...',
                 hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                  color: AppColors.textSecondary,
+                ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -295,7 +306,11 @@ class _HomeScreenState extends State<HomeScreen> {
             color: AppColors.divider.withValues(alpha: 0.3),
             margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           ),
-          Icon(Icons.tune, color: AppColors.textPrimary.withValues(alpha: 0.7), size: 20),
+          Icon(
+            Icons.tune,
+            color: AppColors.textPrimary.withValues(alpha: 0.7),
+            size: 20,
+          ),
         ],
       ),
     );
@@ -352,7 +367,9 @@ class _HomeScreenState extends State<HomeScreen> {
             onPageChanged: (i) => setState(() => _continueLearningPage = i),
             itemBuilder: (context, index) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: _buildContinueLearningCard(continueLearningPrograms[index]),
+              child: _buildContinueLearningCard(
+                continueLearningPrograms[index],
+              ),
             ),
           ),
         ),
@@ -386,7 +403,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // from a shared assumed total, consistent with the 12/20 already shown
     // for the in-progress Flutter program (0.60 * 20 = 12).
     const totalLessonsAssumed = 20;
-    final completedLessonsForProgram = (progressRatio * totalLessonsAssumed).round();
+    final completedLessonsForProgram = (progressRatio * totalLessonsAssumed)
+        .round();
     final isBookmarked = bookmarkedProgramIds.contains(program.id);
 
     return Container(
@@ -394,7 +412,9 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFFDEDE1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.4)),
+        border: Border.all(
+          color: AppColors.primaryLight.withValues(alpha: 0.4),
+        ),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.04),
@@ -416,29 +436,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      ProgramThumbnail(program: program, width: 88, height: 108),
-                    Positioned(
-                      bottom: 10,
-                      left: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        child: Text(
-                          '${(progressRatio * 100).toInt()}%',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
+                      ProgramThumbnail(
+                        program: program,
+                        width: 88,
+                        height: 108,
+                      ),
+                      Positioned(
+                        bottom: 10,
+                        left: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: Text(
+                            '${(progressRatio * 100).toInt()}%',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                     ],
                   ),
                 ),
@@ -574,9 +598,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 child: Icon(
-                  isBookmarked ? Icons.bookmark : Icons.bookmark_border_outlined,
+                  isBookmarked
+                      ? Icons.bookmark
+                      : Icons.bookmark_border_outlined,
                   size: 14,
-                  color: isBookmarked ? AppColors.primary : AppColors.textPrimary,
+                  color: isBookmarked
+                      ? AppColors.primary
+                      : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -612,7 +640,10 @@ class _HomeScreenState extends State<HomeScreen> {
             itemBuilder: (context, index) {
               final announcement = mockAnnouncements[index];
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 2,
+                  vertical: 10,
+                ),
                 child: AnnouncementCard(
                   item: announcement,
                   onTap: () => _showSnackBar(announcement.title),
@@ -728,14 +759,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(
                       _categoryPillIcon(type),
                       size: 14,
-                      color: isActive ? AppColors.primary : AppColors.textSecondary,
+                      color: isActive
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       label,
                       style: textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isActive ? AppColors.primary : AppColors.textPrimary,
+                        color: isActive
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -842,7 +877,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildEmptyState() {
     final textTheme = Theme.of(context).textTheme;
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 24, horizontal: AppSpacing.lg),
+      margin: const EdgeInsets.symmetric(
+        vertical: 24,
+        horizontal: AppSpacing.lg,
+      ),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -868,7 +906,9 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 4),
           Text(
             'We couldn\'t find matches for "$searchQuery" in this category.',
-            style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+            style: textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 14),
@@ -971,7 +1011,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const Divider(color: AppColors.divider),
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFDEDE1),
@@ -1017,7 +1060,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Expanded(
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 8,
+                      ),
                       itemCount: lessonCount,
                       itemBuilder: (context, idx) {
                         final isDone = completedLessonIndices.contains(idx);
@@ -1039,30 +1085,39 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: isDone ? const Color(0xFFFFFDFB) : Colors.white,
+                                color: isDone
+                                    ? const Color(0xFFFFFDFB)
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: isDone ? const Color(0xFFFFEDD5) : AppColors.divider,
+                                  color: isDone
+                                      ? const Color(0xFFFFEDD5)
+                                      : AppColors.divider,
                                 ),
                               ),
                               child: Row(
                                 children: [
                                   CircleAvatar(
                                     radius: 12,
-                                    backgroundColor: isDone ? AppColors.primary : AppColors.divider,
+                                    backgroundColor: isDone
+                                        ? AppColors.primary
+                                        : AppColors.divider,
                                     child: Text(
                                       '${idx + 1}',
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
-                                        color: isDone ? Colors.white : AppColors.textSecondary,
+                                        color: isDone
+                                            ? Colors.white
+                                            : AppColors.textSecondary,
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           _lessonTitles[idx],
@@ -1070,20 +1125,29 @@ class _HomeScreenState extends State<HomeScreen> {
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
                                             color: AppColors.textPrimary,
-                                            decoration: isDone ? TextDecoration.lineThrough : null,
+                                            decoration: isDone
+                                                ? TextDecoration.lineThrough
+                                                : null,
                                           ),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
                                           _lessonDurations[idx],
-                                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AppColors.textSecondary,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
                                   Icon(
-                                    isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-                                    color: isDone ? AppColors.primary : const Color(0xFFD1D5DB),
+                                    isDone
+                                        ? Icons.check_circle
+                                        : Icons.radio_button_unchecked,
+                                    color: isDone
+                                        ? AppColors.primary
+                                        : const Color(0xFFD1D5DB),
                                     size: 20,
                                   ),
                                 ],
@@ -1108,7 +1172,9 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: const Row(
             children: [
               Icon(Icons.smart_toy_outlined, color: AppColors.primary),
@@ -1121,12 +1187,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           content: const Text(
             'Hey there! 👋 I\'m your Excelerate Assistant.\n\nYou can ask me anything about Dart, Flutter, or UI/UX design. Would you like to resume your Flutter course right now?',
-            style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: AppColors.textPrimary,
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -1136,7 +1209,9 @@ class _HomeScreenState extends State<HomeScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(100),
+                ),
               ),
               child: const Text('Resume Lesson'),
             ),
