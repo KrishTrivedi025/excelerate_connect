@@ -85,8 +85,18 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature — coming soon')),
+      SnackBar(
+        content: Text('$feature — coming soon'),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+        margin: const EdgeInsets.only(
+          bottom: BottomWave.height + AppSpacing.md,
+          left: AppSpacing.lg,
+          right: AppSpacing.lg,
+        ),
+      ),
     );
   }
 
@@ -96,7 +106,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final viewInsets = MediaQuery.of(context).viewInsets;
 
     return Scaffold(
@@ -111,41 +120,67 @@ class _LoginScreenState extends State<LoginScreen> {
           // bottom: BottomWave.height reserves the wave's strip so the
           // scrollable viewport can never render content behind it, at any
           // scroll position — not just when scrolled all the way down.
+          // Once the keyboard is open it already covers that whole strip
+          // (and more), so the reservation would just become a dead gap
+          // sitting above the keyboard — drop it while the keyboard is up.
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            bottom: BottomWave.height,
+            bottom: viewInsets.bottom > 0 ? 0 : BottomWave.height,
             child: SafeArea(
               bottom: false,
               child: Padding(
                 padding: EdgeInsets.only(bottom: viewInsets.bottom),
-                child: SingleChildScrollView(
+                // LayoutBuilder must wrap the ScrollView, not sit inside it —
+                // a vertical SingleChildScrollView gives its child unbounded
+                // height (that's what lets it scroll), so a LayoutBuilder
+                // placed inside would read maxHeight as infinite. Measuring
+                // here, above the scroll view, captures the real bounded
+                // viewport height instead.
+                child: LayoutBuilder(
+                  builder: (context, outerConstraints) => SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg,
                   ),
-                  child: Center(
+                    child: Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        minHeight: size.height,
+                        minHeight: outerConstraints.maxHeight,
                         maxWidth: 440,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
+                        // Centers content vertically within the box instead
+                        // of packing it at the top — the box is already
+                        // forced to full viewport height (see minHeight
+                        // above), so without this the extra space just
+                        // collects below the content instead of the whole
+                        // block sitting in the middle of the screen.
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const SizedBox(height: AppSpacing.xxl),
                           Center(
+                            // Sized to the logo's real ~4:1 wide-wordmark
+                            // aspect ratio (not a square) so it renders at a
+                            // legible size instead of BoxFit.contain
+                            // shrinking it to fit a square box.
                             child: SizedBox(
-                              width: 90,
-                              height: 90,
-                              child: Center(
-                                child: Text(
-                                  'X',
-                                  style: TextStyle(
-                                    fontSize: 72,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1,
-                                    color: AppColors.primary,
+                              width: 220,
+                              height: 66,
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Center(
+                                  child: Text(
+                                    'X',
+                                    style: TextStyle(
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1,
+                                      color: AppColors.primary,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -304,6 +339,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: AppSpacing.xl),
                         ],
                       ),
+                    ),
                     ),
                   ),
                 ),

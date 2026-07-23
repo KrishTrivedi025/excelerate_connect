@@ -15,35 +15,74 @@ class AppRouter {
   static const String programListing = '/programs';
   static const String programDetails = '/program-details';
 
+  /// Bottom-nav tab routes — these transition with a slide+fade instead of
+  /// the default platform push, since switching tabs isn't a forward
+  /// navigation. Checked by both onGenerateRoute (e.g. deep links) and
+  /// goToTab (bottom nav taps), so the behavior is defined in one place.
+  static const Set<String> _tabRoutes = {home, programListing};
+
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    final builder = _builderForRoute(settings);
+    if (builder == null) return _notFound(settings.name);
+    return _tabRoutes.contains(settings.name)
+        ? _tabPage(builder)
+        : _page(builder);
+  }
+
+  /// Switches between bottom-nav tabs. Uses pushReplacement (tabs are peers,
+  /// not a navigation stack) with the shared slide+fade transition.
+  static void goToTab(BuildContext context, String routeName) {
+    final builder = _builderForRoute(RouteSettings(name: routeName));
+    if (builder == null) return;
+    Navigator.of(context).pushReplacement(_tabPage(builder));
+  }
+
+  static WidgetBuilder? _builderForRoute(RouteSettings settings) {
     switch (settings.name) {
       case login:
-        return _page(const LoginScreen());
+        return (_) => const LoginScreen();
       case signup:
-        return _page(const SignupScreen());
+        return (_) => const SignupScreen();
       case home:
-        return _page(const HomeScreen());
+        return (_) => const HomeScreen();
       case programListing:
-        return _page(const ProgramListingScreen());
+        return (_) => const ProgramListingScreen();
       case programDetails:
-        if (settings.arguments is! Opportunity) {
-          return _notFound(settings.name);
-        }
-        return _page(
-          ProgramDetailsScreen(
-            opportunity: settings.arguments as Opportunity,
-          ),
-        );
+        if (settings.arguments is! Opportunity) return null;
+        return (_) => ProgramDetailsScreen(
+              opportunity: settings.arguments as Opportunity,
+            );
       default:
-        return _notFound(settings.name);
+        return null;
     }
   }
 
-  static MaterialPageRoute<void> _page(Widget child) =>
-      MaterialPageRoute(builder: (_) => child);
+  static MaterialPageRoute<void> _page(WidgetBuilder builder) =>
+      MaterialPageRoute(builder: builder);
 
-  static MaterialPageRoute<void> _notFound(String? name) =>
-      MaterialPageRoute(
+  static PageRouteBuilder<void> _tabPage(WidgetBuilder builder) {
+    return PageRouteBuilder<void>(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          builder(context),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.04, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
+            child: child,
+          ),
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 260),
+    );
+  }
+
+  static MaterialPageRoute<void> _notFound(String? name) => MaterialPageRoute(
         builder: (_) => Scaffold(
           body: Center(
             child: Text('Route not found: ${name ?? 'unknown'}'),
