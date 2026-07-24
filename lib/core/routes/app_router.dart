@@ -5,7 +5,6 @@ import '../../screens/login/login_screen.dart';
 import '../../screens/program_details/program_details_screen.dart';
 import '../../screens/program_listing/program_listing_screen.dart';
 import '../../screens/signup/signup_screen.dart';
-
 class AppRouter {
   const AppRouter._();
 
