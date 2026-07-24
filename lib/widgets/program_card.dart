@@ -34,6 +34,14 @@ class ProgramCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.divider.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 24,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -99,7 +107,7 @@ class ProgramCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '4.8 (120)', // Static mock rating matching the picture layout
+                            _getMockRating(program),
                             style: textTheme.labelSmall?.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -182,6 +190,14 @@ class ProgramCard extends StatelessWidget {
     final date = program.cohorts.first.startDate;
     return 'Starts ${_kMonthAbbreviations[date.month - 1]} ${date.day}, ${date.year}';
   }
+
+  static String _getMockRating(Opportunity program) {
+    // Generates a consistent but varied rating based on the program ID
+    final hash = program.id.hashCode.abs();
+    final rating = 4.0 + (hash % 11) / 10.0; // Between 4.0 and 5.0
+    final count = 50 + (hash % 300); // Between 50 and 349 reviews
+    return '${rating.toStringAsFixed(1)} ($count)';
+  }
 }
 
 /// Renders [program.imageUrl] as an asset image. Week 2 asset files
@@ -209,12 +225,13 @@ class _ProgramThumbnail extends StatelessWidget {
           program.imageUrl,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) => Container(
-            color: AppColors.primaryLight.withValues(alpha: 0.25),
-            alignment: Alignment.center,
-            child: Icon(
-              _iconFor(program.type),
-              color: AppColors.primary,
-              size: width < 80 ? 22 : 32,
+            color: AppColors.primary.withValues(alpha: 0.25),
+            child: Center(
+              child: Icon(
+                _iconFor(program.type),
+                color: AppColors.primary,
+                size: width * 0.4,
+              ),
             ),
           ),
         ),
