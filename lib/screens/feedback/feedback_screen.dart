@@ -839,13 +839,22 @@ class _SuccessPanel extends StatelessWidget {
                     children: [
                       AnimatedBuilder(
                         animation: countdown,
-                        builder: (context, child) => CircularProgressIndicator(
-                          value: 1 - countdown.value,
-                          strokeWidth: 3,
-                          strokeCap: StrokeCap.round,
-                          backgroundColor: AppColors.divider,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.primary,
+                        // Stack only gives non-positioned children loose
+                        // constraints, so without this explicit SizedBox the
+                        // indicator shrinks to its own 36px default — smaller
+                        // than the 48px checkmark circle in front of it, and
+                        // therefore fully hidden behind it.
+                        builder: (context, child) => SizedBox(
+                          width: 64,
+                          height: 64,
+                          child: CircularProgressIndicator(
+                            value: 1 - countdown.value,
+                            strokeWidth: 3,
+                            strokeCap: StrokeCap.round,
+                            backgroundColor: AppColors.divider,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColors.primary,
+                            ),
                           ),
                         ),
                       ),
