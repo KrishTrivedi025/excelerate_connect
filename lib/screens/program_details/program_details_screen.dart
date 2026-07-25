@@ -21,6 +21,7 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   static const _divider = AppColors.divider;
 
   late bool _isFavorited;
+  bool _hasRegistered = false;
 
   @override
   void initState() {
@@ -32,11 +33,21 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
     setState(() => _isFavorited = !_isFavorited);
   }
 
-  void _onRegister() {
-    Navigator.of(context).pushNamed(
-      AppRouter.registration,
-      arguments: widget.opportunity,
-    );
+  Future<void> _onRegister() async {
+    // RegistrationScreen pops with `true` once it auto-dismisses its
+    // success panel — that's the signal to swap this button to Feedback.
+    final result = await Navigator.of(
+      context,
+    ).pushNamed(AppRouter.registration, arguments: widget.opportunity);
+    if (result == true && mounted) {
+      setState(() => _hasRegistered = true);
+    }
+  }
+
+  void _onGiveFeedback() {
+    Navigator.of(
+      context,
+    ).pushNamed(AppRouter.feedback, arguments: widget.opportunity.name);
   }
 
   Widget _metaChip(String label) {
@@ -109,7 +120,11 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.check_circle, size: 18, color: AppColors.success),
+                  const Icon(
+                    Icons.check_circle,
+                    size: 18,
+                    color: AppColors.success,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -148,7 +163,10 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
           ],
         ),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+        ),
       ],
     );
   }
@@ -166,11 +184,7 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionTitle(title),
-          const SizedBox(height: 14),
-          child,
-        ],
+        children: [_sectionTitle(title), const SizedBox(height: 14), child],
       ),
     );
   }
@@ -233,7 +247,10 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
         children: [
           Icon(icon, size: 16, color: _primary),
           const SizedBox(width: 6),
-          Text(skill.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(
+            skill.name,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
@@ -273,7 +290,10 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
           errorBuilder: (context, error, stackTrace) => const Center(
             child: Text(
               'Saint Louis University',
-              style: TextStyle(fontWeight: FontWeight.w700, color: _textSecondary),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: _textSecondary,
+              ),
             ),
           ),
         ),
@@ -284,7 +304,9 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final opportunity = widget.opportunity;
-    final cohort = opportunity.cohorts.isNotEmpty ? opportunity.cohorts.first : null;
+    final cohort = opportunity.cohorts.isNotEmpty
+        ? opportunity.cohorts.first
+        : null;
     final rewards = opportunity.rewards ?? const [];
     final skills = opportunity.skills;
     final totalSkillPoints = skills.fold<int>(0, (sum, s) => sum + s.points);
@@ -295,277 +317,312 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
       body: SafeArea(
         bottom: false,
         child: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Small icon/logo + program name, side by side — no
-                // separate hero image section.
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: ProgramThumbnail(
-                        program: opportunity,
-                        width: 48,
-                        height: 48,
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. Small icon/logo + program name, side by side — no
+                  // separate hero image section.
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: ProgramThumbnail(
+                          program: opportunity,
+                          width: 48,
+                          height: 48,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          opportunity.name,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF212121),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 2. Meta / key-point chips.
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _metaChip(opportunity.categoryLabel),
+                      _metaChip(opportunity.durationLabel),
+                      _metaChip(opportunity.locationLabel),
+                      _metaChip(opportunity.feeDisplay),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 3. Supported By — same fixed Saint Louis University logo
+                  // on every program's page, not tied to that program's own
+                  // sponsor field.
+                  _sectionTitle('Supported By'),
+                  const SizedBox(height: 12),
+                  _sponsorLogo(),
+                  const SizedBox(height: 24),
+
+                  // 5. About this program + What You'll Do.
+                  _sectionTitle('About this program'),
+                  const SizedBox(height: 12),
+                  Text(
+                    opportunity.fullDescription ?? opportunity.shortDescription,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                      color: Color(0xFF212121),
+                    ),
+                  ),
+                  if (roles.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    const Text(
+                      "What You'll Do",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        opportunity.name,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF212121),
+                    const SizedBox(height: 10),
+                    _bulletList(roles),
+                  ],
+                  const SizedBox(height: 24),
+
+                  // 6. Key facts row.
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _factItem(
+                          Icons.schedule,
+                          'Duration',
+                          opportunity.durationLabel,
+                        ),
+                      ),
+                      Expanded(
+                        child: _factItem(
+                          Icons.savings_outlined,
+                          'Scholarship',
+                          opportunity.scholarshipDisplay,
+                        ),
+                      ),
+                      Expanded(
+                        child: _factItem(
+                          Icons.payments_outlined,
+                          'Fee',
+                          opportunity.feeDisplay,
+                        ),
+                      ),
+                      Expanded(
+                        child: _factItem(
+                          Icons.location_on_outlined,
+                          'Location',
+                          opportunity.locationLabel,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 7. Upcoming Project Dates — its own bordered section.
+                  if (cohort != null) ...[
+                    _borderedSection(
+                      title: 'Upcoming Project Dates',
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _factItem(
+                              Icons.event_busy_outlined,
+                              'Last Date To Apply',
+                              _dateLabel(cohort.lastDateToApply),
+                            ),
+                          ),
+                          Expanded(
+                            child: _factItem(
+                              Icons.play_circle_outline,
+                              'Experience Start Date',
+                              _dateLabel(cohort.startDate),
+                            ),
+                          ),
+                          if (cohort.endDate != null)
+                            Expanded(
+                              child: _factItem(
+                                Icons.flag_outlined,
+                                'End Date',
+                                _dateLabel(cohort.endDate!),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // 8. Eligibility — checkbox style.
+                  if (opportunity.eligibility.isNotEmpty) ...[
+                    _sectionTitle('Eligibility'),
+                    const SizedBox(height: 12),
+                    _checklist(opportunity.eligibility),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // 9. "{Program Name} Completed" — Rewards + Skills.
+                  if (rewards.isNotEmpty || skills.isNotEmpty) ...[
+                    _borderedSection(
+                      title: '${opportunity.name} Completed',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (rewards.isNotEmpty) ...[
+                            const Text(
+                              'Rewards',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: rewards.map(_rewardChip).toList(),
+                            ),
+                          ],
+                          if (rewards.isNotEmpty && skills.isNotEmpty)
+                            const SizedBox(height: 18),
+                          if (skills.isNotEmpty) ...[
+                            const Text(
+                              'Skills',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              height: 40,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                children: skills.map(_skillChip).toList(),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // 10. Trust seal — one shared generic image, plus stats.
+                  Center(
+                    child: Image.asset(
+                      'assets/images/trust_seal.png',
+                      width: 140,
+                      height: 140,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 140,
+                        height: 140,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _primary.withValues(alpha: 0.1),
+                        ),
+                        child: const Icon(
+                          Icons.verified_outlined,
+                          size: 56,
+                          color: _primary,
                         ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // 2. Meta / key-point chips.
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _metaChip(opportunity.categoryLabel),
-                    _metaChip(opportunity.durationLabel),
-                    _metaChip(opportunity.locationLabel),
-                    _metaChip(opportunity.feeDisplay),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // 3. Supported By — same fixed Saint Louis University logo
-                // on every program's page, not tied to that program's own
-                // sponsor field.
-                _sectionTitle('Supported By'),
-                const SizedBox(height: 12),
-                _sponsorLogo(),
-                const SizedBox(height: 24),
-
-                // 5. About this program + What You'll Do.
-                _sectionTitle('About this program'),
-                const SizedBox(height: 12),
-                Text(
-                  opportunity.fullDescription ?? opportunity.shortDescription,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    height: 1.5,
-                    color: Color(0xFF212121),
                   ),
-                ),
-                if (roles.isNotEmpty) ...[
-                  const SizedBox(height: 20),
-                  const Text(
-                    "What You'll Do",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 10),
-                  _bulletList(roles),
-                ],
-                const SizedBox(height: 24),
-
-                // 6. Key facts row.
-                Row(
-                  children: [
-                    Expanded(
-                      child: _factItem(Icons.schedule, 'Duration', opportunity.durationLabel),
-                    ),
-                    Expanded(
-                      child: _factItem(
-                        Icons.savings_outlined,
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _statCallout(
                         'Scholarship',
                         opportunity.scholarshipDisplay,
                       ),
-                    ),
-                    Expanded(
-                      child: _factItem(Icons.payments_outlined, 'Fee', opportunity.feeDisplay),
-                    ),
-                    Expanded(
-                      child: _factItem(
-                        Icons.location_on_outlined,
-                        'Location',
-                        opportunity.locationLabel,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // 7. Upcoming Project Dates — its own bordered section.
-                if (cohort != null) ...[
-                  _borderedSection(
-                    title: 'Upcoming Project Dates',
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _factItem(
-                            Icons.event_busy_outlined,
-                            'Last Date To Apply',
-                            _dateLabel(cohort.lastDateToApply),
-                          ),
-                        ),
-                        Expanded(
-                          child: _factItem(
-                            Icons.play_circle_outline,
-                            'Experience Start Date',
-                            _dateLabel(cohort.startDate),
-                          ),
-                        ),
-                        if (cohort.endDate != null)
-                          Expanded(
-                            child: _factItem(
-                              Icons.flag_outlined,
-                              'End Date',
-                              _dateLabel(cohort.endDate!),
-                            ),
-                          ),
-                      ],
-                    ),
+                      _statCallout('Skill Points', '$totalSkillPoints'),
+                    ],
                   ),
-                  const SizedBox(height: 24),
                 ],
-
-                // 8. Eligibility — checkbox style.
-                if (opportunity.eligibility.isNotEmpty) ...[
-                  _sectionTitle('Eligibility'),
-                  const SizedBox(height: 12),
-                  _checklist(opportunity.eligibility),
-                  const SizedBox(height: 24),
-                ],
-
-                // 9. "{Program Name} Completed" — Rewards + Skills.
-                if (rewards.isNotEmpty || skills.isNotEmpty) ...[
-                  _borderedSection(
-                    title: '${opportunity.name} Completed',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (rewards.isNotEmpty) ...[
-                          const Text(
-                            'Rewards',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: rewards.map(_rewardChip).toList(),
-                          ),
-                        ],
-                        if (rewards.isNotEmpty && skills.isNotEmpty)
-                          const SizedBox(height: 18),
-                        if (skills.isNotEmpty) ...[
-                          const Text(
-                            'Skills',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 40,
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              children: skills.map(_skillChip).toList(),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // 10. Trust seal — one shared generic image, plus stats.
-                Center(
-                  child: Image.asset(
-                    'assets/images/trust_seal.png',
-                    width: 140,
-                    height: 140,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _primary.withValues(alpha: 0.1),
-                      ),
-                      child: const Icon(Icons.verified_outlined, size: 56, color: _primary),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _statCallout('Scholarship', opportunity.scholarshipDisplay),
-                    _statCallout('Skill Points', '$totalSkillPoints'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: _divider)),
               ),
-              child: SafeArea(
-                top: false,
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: _toggleFavorite,
-                      icon: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        transitionBuilder: (child, animation) =>
-                            ScaleTransition(scale: animation, child: child),
-                        child: Icon(
-                          _isFavorited ? Icons.favorite : Icons.favorite_border,
-                          key: ValueKey(_isFavorited),
-                          color: _isFavorited ? const Color(0xFFF44336) : const Color(0xFF212121),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: _divider)),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: _toggleFavorite,
+                        icon: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          transitionBuilder: (child, animation) =>
+                              ScaleTransition(scale: animation, child: child),
+                          child: Icon(
+                            _isFavorited
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            key: ValueKey(_isFavorited),
+                            color: _isFavorited
+                                ? const Color(0xFFF44336)
+                                : const Color(0xFF212121),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: SizedBox(
-                        height: 52,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _hasRegistered
+                                  ? AppColors.success
+                                  : _primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: _hasRegistered
+                                ? _onGiveFeedback
+                                : _onRegister,
+                            child: Text(
+                              _hasRegistered ? 'Give Feedback' : 'Register Now',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
-                          onPressed: _onRegister,
-                          child: const Text(
-                            'Register Now',
-                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -575,18 +632,35 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
       children: [
         Text(
           value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _primary),
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: _primary,
+          ),
         ),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(fontSize: 12, color: _textSecondary)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: _textSecondary),
+        ),
       ],
     );
   }
 
   static String _dateLabel(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }

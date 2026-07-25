@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
+import '../../widgets/bottom_wave.dart';
 
 class RegistrationScreen extends StatefulWidget {
   final Opportunity opportunity;
@@ -44,12 +46,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _dobTouchedInvalid = false;
   bool _introducedTouchedInvalid = false;
 
+  // User-draggable height for the "Why do you want to apply" field.
+  double _commentsHeight = 110;
+  static const double _commentsMinHeight = 70;
+  static const double _commentsMaxHeight = 320;
+
+  bool _showSuccessPanel = false;
+  Timer? _successTimer;
+
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
     _whyApplyController.dispose();
+    _successTimer?.cancel();
     super.dispose();
   }
 
@@ -93,6 +104,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     required String? selected,
     required ValueChanged<String> onSelect,
   }) {
+    // A previously-focused text field can silently regain focus once this
+    // sheet closes, popping the keyboard back open — Flutter restores the
+    // base route's last-focused node by default once the sheet's route is
+    // gone, regardless of how it was dismissed (option tap, the close
+    // button, or system back). Plain unfocus() only clears the *current*
+    // focus; it doesn't stop that restoration, since the scope still
+    // remembers which descendant to hand focus back to. Requesting focus on
+    // a disconnected, one-off FocusNode instead means there is no longer a
+    // text field on record for anything to restore focus to.
+    FocusScope.of(context).requestFocus(FocusNode());
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -157,8 +179,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             ),
                             // ListTile paints its ink splash/background on the
                             // nearest Material ancestor — without this, the
-                            // colored Container above hides those effects
-                            // entirely (a real Flutter framework warning).
+                            // colored Container above hides those effects.
                             child: Material(
                               type: MaterialType.transparency,
                               borderRadius: BorderRadius.circular(
@@ -199,7 +220,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ),
         );
       },
-    );
+    ).then((_) {
+      if (mounted) FocusScope.of(context).requestFocus(FocusNode());
+    });
   }
 
   void _openGenderSelector() {
@@ -266,103 +289,18 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       // TODO(registration): Replace with actual registration API call.
       await Future<void>.delayed(const Duration(milliseconds: 900));
       if (!mounted) return;
-      _showConfirmationDialog();
+      setState(() {
+        _isSubmitting = false;
+        _showSuccessPanel = true;
+      });
+      // Auto-dismiss and return to Program Details — true tells it
+      // registration succeeded so it can swap in the Feedback button.
+      _successTimer = Timer(const Duration(seconds: 5), () {
+        if (mounted) Navigator.of(context).pop(true);
+      });
     } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      if (mounted && _isSubmitting) setState(() => _isSubmitting = false);
     }
-  }
-
-  void _showConfirmationDialog() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.hero),
-        ),
-        title: const Text(
-          'Registration Confirmed!',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Student: ${_firstNameController.text} ${_lastNameController.text}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Course: ${widget.opportunity.name}',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Email: ${_emailController.text}',
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            if (_howIntroduced != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Source: $_howIntroduced',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              Navigator.of(context).pushNamed(
-                AppRouter.feedback,
-                arguments: widget.opportunity.name,
-              );
-            },
-            child: const Text(
-              'Give Feedback',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              // Close the dialog, then pop the registration screen itself —
-              // this returns to Program Details, which is exactly what was
-              // underneath when this screen was pushed. No further
-              // navigation call needed; Program Details is already there.
-              Navigator.of(dialogContext).pop();
-              Navigator.of(context).pop();
-            },
-            child: const Text(
-              'Done',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   InputDecoration _fieldDecoration(String hint) {
@@ -395,22 +333,27 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final dobFormatted = _selectedDOB == null
         ? 'Select your date of birth'
         : '${_selectedDOB!.month}/${_selectedDOB!.day}/${_selectedDOB!.year}';
+    final viewInsets = MediaQuery.of(context).viewInsets;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // Unlike Login/Sign-Up's fixed bottom wave, this screen's form is tall
-      // enough (6 fields incl. a multiline one) that it needs to actually
-      // resize/scroll with the keyboard rather than staying pinned — so,
-      // deliberately, true here.
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
+      // Wave is pinned via bottomNavigationBar (see below), matching
+      // Login/Sign-Up — resizeToAvoidBottomInset must stay false or the
+      // wave rides up above the keyboard instead of staying put.
+      resizeToAvoidBottomInset: false,
+      bottomNavigationBar: const IgnorePointer(
+        child: BottomWave(color: AppColors.wave),
+      ),
+      body: Stack(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: viewInsets.bottom),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
-                  vertical: 8,
+                  vertical: 4,
                 ),
                 child: Form(
                   key: _formKey,
@@ -418,35 +361,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          IconButton(
-                            icon: const Icon(
-                              Icons.arrow_back_ios_new,
-                              color: AppColors.textPrimary,
-                              size: 18,
-                            ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                            overlayColor: Colors.transparent,
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            // Back arrow just pops — returns to whichever
-                            // Program Details screen this was pushed from.
-                            onPressed: () => Navigator.of(context).pop(),
+                            minimumSize: const Size(0, 32),
                           ),
-                          TextButton(
-                            onPressed: () {},
-                            child: const Text(
-                              'Need Help?',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
-                              ),
+                          onPressed: () {},
+                          child: const Text(
+                            'Need Help?',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       const Text(
                         'Course Registration',
                         style: TextStyle(
@@ -465,53 +399,70 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Selected course bar — reflects the real Opportunity
-                      // passed in via navigation arguments, not a hardcoded
-                      // title.
+                      // Selected course card — reflects the real Opportunity
+                      // passed in via navigation arguments.
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                          horizontal: 14,
+                          vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.wave.withValues(alpha: 0.4),
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(
                             AppRadius.textField,
                           ),
-                          border: Border.all(
-                            color: AppColors.primaryLight.withValues(
-                              alpha: 0.5,
+                          border: Border.all(color: AppColors.divider),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.textPrimary.withValues(
+                                alpha: 0.04,
+                              ),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
+                          ],
                         ),
                         child: Row(
                           children: [
                             Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Course: ',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.school_outlined,
+                                size: 16,
+                                color: AppColors.primary,
                               ),
                             ),
+                            const SizedBox(width: 10),
                             Expanded(
-                              child: Text(
-                                widget.opportunity.name,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'COURSE',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  Text(
+                                    widget.opportunity.name,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -767,128 +718,241 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         ),
                       const SizedBox(height: 14),
 
-                      // FIELD 6: Why do you want to apply? (optional, multiline)
+                      // FIELD 6: Why do you want to apply? (optional, resizable)
                       const Text(
-                        "Why do you want to apply for this course?",
+                        'Why do you want to apply for this course?',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _whyApplyController,
-                        maxLines: 4,
-                        minLines: 2,
-                        maxLength: 300,
-                        style: const TextStyle(fontSize: 13),
-                        decoration: _fieldDecoration(
-                          'Tell us about your goals and motivation...',
+                      Stack(
+                        children: [
+                          SizedBox(
+                            height: _commentsHeight,
+                            child: TextFormField(
+                              controller: _whyApplyController,
+                              maxLines: null,
+                              expands: true,
+                              maxLength: 300,
+                              textAlignVertical: TextAlignVertical.top,
+                              style: const TextStyle(fontSize: 13),
+                              decoration:
+                                  _fieldDecoration(
+                                    'Tell us about your goals and motivation...',
+                                  ).copyWith(
+                                    // Built-in counter needs its own reserved row
+                                    // below the field — not available once the
+                                    // field expands to fill a fixed-height box.
+                                    // A custom counter is rendered below instead.
+                                    counterText: '',
+                                    contentPadding: const EdgeInsets.fromLTRB(
+                                      14,
+                                      12,
+                                      28,
+                                      18,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 6,
+                            bottom: 6,
+                            // Listener + raw pointer events instead of
+                            // GestureDetector.onPanUpdate — this handle sits
+                            // inside a vertically-scrolling SingleChildScrollView,
+                            // and a plain vertical-drag GestureDetector loses
+                            // the gesture arena to the ancestor Scrollable
+                            // (both want the same vertical drag), so
+                            // onPanUpdate never fires. Listener observes raw
+                            // pointer moves regardless of arena resolution.
+                            child: Listener(
+                              onPointerMove: (event) {
+                                setState(() {
+                                  _commentsHeight =
+                                      (_commentsHeight + event.delta.dy)
+                                          .clamp(
+                                            _commentsMinHeight,
+                                            _commentsMaxHeight,
+                                          );
+                                });
+                              },
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.resizeUpDown,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(6),
+                                  child: Transform.rotate(
+                                    angle: -0.785398,
+                                    child: Icon(
+                                      Icons.drag_handle_rounded,
+                                      size: 14,
+                                      color: AppColors.textSecondary.withValues(
+                                        alpha: 0.6,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: _whyApplyController,
+                            builder: (context, value, _) => Text(
+                              '${value.text.length}/300',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 20),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 46,
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submitRegistration,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.button,
+                              ),
+                            ),
+                          ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Register',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      SizedBox(height: BottomWave.height + 20),
                     ],
                   ),
                 ),
               ),
             ),
-            SizedBox(
-              height: 100,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Positioned.fill(
-                    child: CustomPaint(painter: _BottomWavePainter()),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 24,
-                      right: 24,
-                      bottom: 20,
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _isSubmitting ? null : _submitRegistration,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          elevation: 4,
-                          shadowColor: AppColors.primary.withValues(alpha: 0.3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppRadius.button,
-                            ),
-                          ),
-                        ),
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Register',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Icon(
-                                    Icons.arrow_forward_rounded,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          ),
+
+          // Dimmed backdrop behind the success panel.
+          IgnorePointer(
+            ignoring: !_showSuccessPanel,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 250),
+              opacity: _showSuccessPanel ? 1 : 0,
+              child: Container(color: Colors.black.withValues(alpha: 0.45)),
             ),
-          ],
-        ),
+          ),
+
+          // Auto-dismissing (5s) success panel — slides up from the bottom,
+          // then Navigator.pop(true) (scheduled in _submitRegistration)
+          // returns to Program Details on its own; no manual button needed.
+          _SuccessPanel(
+            visible: _showSuccessPanel,
+            opportunityName: widget.opportunity.name,
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Decorative bottom wave, matching the peach wave used on Login/Sign-Up —
-/// painted directly rather than reusing [BottomWave] since this one has a
-/// different curve shape (single asymmetric cubic vs. the shared widget's
-/// double-quad shape) per the original design.
-class _BottomWavePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.wave
-      ..style = PaintingStyle.fill;
+class _SuccessPanel extends StatelessWidget {
+  final bool visible;
+  final String opportunityName;
 
-    final path = Path();
-    path.moveTo(0, size.height * 0.35);
-    path.cubicTo(
-      size.width * 0.25,
-      size.height * 0.15,
-      size.width * 0.65,
-      size.height * 0.65,
-      size.width,
-      size.height * 0.25,
+  const _SuccessPanel({required this.visible, required this.opportunityName});
+
+  @override
+  Widget build(BuildContext context) {
+    const panelHeight = 220.0;
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+      left: 0,
+      right: 0,
+      bottom: visible ? 0 : -panelHeight,
+      height: panelHeight,
+      child: IgnorePointer(
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(28),
+              topRight: Radius.circular(28),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x26141414),
+                blurRadius: 30,
+                offset: Offset(0, -10),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.lg,
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(
+                    color: AppColors.success,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.check, size: 24, color: Colors.white),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const Text(
+                  'Registered!',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'You\'re all set for $opportunityName.\nTaking you back to the course...',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    canvas.drawPath(path, paint);
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
