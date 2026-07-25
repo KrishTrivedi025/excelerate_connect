@@ -18,7 +18,8 @@ class FeedbackScreen extends StatefulWidget {
   State<FeedbackScreen> createState() => _FeedbackScreenState();
 }
 
-class _FeedbackScreenState extends State<FeedbackScreen> {
+class _FeedbackScreenState extends State<FeedbackScreen>
+    with SingleTickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _nameController = TextEditingController();
@@ -55,7 +56,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   bool _isSubmitting = false;
   bool _showSuccessPanel = false;
-  Timer? _successTimer;
+
+  // Drives both the auto-return navigation and the countdown ring drawn
+  // around the success checkmark — one controller instead of a separate
+  // Timer, so the visual countdown and the actual navigation can't drift
+  // apart.
+  late final AnimationController _successCountdown;
 
   @override
   void initState() {
@@ -72,6 +78,14 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       if (!options.contains(filler)) options.add(filler);
     }
     _chipOptions = options;
+
+    _successCountdown =
+        AnimationController(vsync: this, duration: const Duration(seconds: 5))
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed && mounted) {
+              _returnToPrograms();
+            }
+          });
   }
 
   @override
@@ -79,7 +93,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _commentsController.dispose();
-    _successTimer?.cancel();
+    _successCountdown.dispose();
     super.dispose();
   }
 
@@ -102,7 +116,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         _isSubmitting = false;
         _showSuccessPanel = true;
       });
-      _successTimer = Timer(const Duration(seconds: 5), _returnToPrograms);
+      _successCountdown.forward(from: 0);
     } finally {
       if (mounted && _isSubmitting) setState(() => _isSubmitting = false);
     }
@@ -712,6 +726,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           _SuccessPanel(
             visible: _showSuccessPanel,
             courseName: widget.opportunity.name,
+            countdown: _successCountdown,
           ),
         ],
       ),
@@ -769,8 +784,13 @@ class _RingThumbShape extends SliderComponentShape {
 class _SuccessPanel extends StatelessWidget {
   final bool visible;
   final String courseName;
+  final Animation<double> countdown;
 
-  const _SuccessPanel({required this.visible, required this.courseName});
+  const _SuccessPanel({
+    required this.visible,
+    required this.courseName,
+    required this.countdown,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -806,15 +826,45 @@ class _SuccessPanel extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: const BoxDecoration(
-                    color: AppColors.success,
-                    shape: BoxShape.circle,
+                // The checkmark sits inside a ring that drains clockwise
+                // over the 5-second countdown, driven by the same
+                // AnimationController that triggers the auto-return — so
+                // the user can see how long they have before it happens,
+                // without a literal ticking digit.
+                SizedBox(
+                  width: 64,
+                  height: 64,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      AnimatedBuilder(
+                        animation: countdown,
+                        builder: (context, child) => CircularProgressIndicator(
+                          value: 1 - countdown.value,
+                          strokeWidth: 3,
+                          strokeCap: StrokeCap.round,
+                          backgroundColor: AppColors.divider,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: const BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.check,
+                          size: 24,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.check, size: 24, color: Colors.white),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 const Text(
