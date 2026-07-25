@@ -1,9 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
-import '../../widgets/bottom_wave.dart';
+import '../../widgets/floating_action_bar.dart';
 
 class RegistrationScreen extends StatefulWidget {
   final Opportunity opportunity;
@@ -337,13 +338,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // Wave is pinned via bottomNavigationBar (see below), matching
-      // Login/Sign-Up — resizeToAvoidBottomInset must stay false or the
-      // wave rides up above the keyboard instead of staying put.
       resizeToAvoidBottomInset: false,
-      bottomNavigationBar: const IgnorePointer(
-        child: BottomWave(color: AppColors.wave),
-      ),
       body: Stack(
         children: [
           SafeArea(
@@ -432,10 +427,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 shape: BoxShape.circle,
                               ),
                               alignment: Alignment.center,
-                              child: const Icon(
-                                Icons.school_outlined,
-                                size: 16,
-                                color: AppColors.primary,
+                              // Drop a Lordicon-exported Lottie file at
+                              // assets/icons/course_badge.json to replace
+                              // this fallback glyph — same pattern as the
+                              // bottom nav bar's icons.
+                              child: Lottie.asset(
+                                'assets/icons/course_badge.json',
+                                width: 18,
+                                height: 18,
+                                fit: BoxFit.contain,
+                                repeat: false,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(
+                                      Icons.auto_stories_rounded,
+                                      size: 16,
+                                      color: AppColors.primary,
+                                    ),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -480,34 +487,29 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ),
                       const SizedBox(height: 6),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: SizedBox(
-                              height: 46,
-                              child: TextFormField(
-                                controller: _firstNameController,
-                                style: const TextStyle(fontSize: 13),
-                                decoration: _fieldDecoration('First Name'),
-                                validator: (val) =>
-                                    (val == null || val.trim().isEmpty)
-                                    ? 'Required'
-                                    : null,
-                              ),
+                            child: TextFormField(
+                              controller: _firstNameController,
+                              style: const TextStyle(fontSize: 13),
+                              decoration: _fieldDecoration('First Name'),
+                              validator: (val) =>
+                                  (val == null || val.trim().isEmpty)
+                                  ? 'Required'
+                                  : null,
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: SizedBox(
-                              height: 46,
-                              child: TextFormField(
-                                controller: _lastNameController,
-                                style: const TextStyle(fontSize: 13),
-                                decoration: _fieldDecoration('Last Name'),
-                                validator: (val) =>
-                                    (val == null || val.trim().isEmpty)
-                                    ? 'Required'
-                                    : null,
-                              ),
+                            child: TextFormField(
+                              controller: _lastNameController,
+                              style: const TextStyle(fontSize: 13),
+                              decoration: _fieldDecoration('Last Name'),
+                              validator: (val) =>
+                                  (val == null || val.trim().isEmpty)
+                                  ? 'Required'
+                                  : null,
                             ),
                           ),
                         ],
@@ -582,23 +584,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      SizedBox(
-                        height: 46,
-                        child: TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          style: const TextStyle(fontSize: 13),
-                          decoration: _fieldDecoration('Enter your email'),
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return 'Email is required';
-                            }
-                            if (!_emailRegex.hasMatch(val.trim())) {
-                              return 'Enter a valid email address';
-                            }
-                            return null;
-                          },
-                        ),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        style: const TextStyle(fontSize: 13),
+                        decoration: _fieldDecoration('Enter your email'),
+                        validator: (val) {
+                          if (val == null || val.trim().isEmpty) {
+                            return 'Email is required';
+                          }
+                          if (!_emailRegex.hasMatch(val.trim())) {
+                            return 'Enter a valid email address';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 14),
 
@@ -771,11 +770,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               onPointerMove: (event) {
                                 setState(() {
                                   _commentsHeight =
-                                      (_commentsHeight + event.delta.dy)
-                                          .clamp(
-                                            _commentsMinHeight,
-                                            _commentsMaxHeight,
-                                          );
+                                      (_commentsHeight + event.delta.dy).clamp(
+                                        _commentsMinHeight,
+                                        _commentsMaxHeight,
+                                      );
                                 });
                               },
                               child: MouseRegion(
@@ -814,42 +812,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-
-                      SizedBox(
-                        width: double.infinity,
-                        height: 46,
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : _submitRegistration,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.button,
-                              ),
-                            ),
-                          ),
-                          child: _isSubmitting
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text(
-                                  'Register',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                        ),
-                      ),
-                      SizedBox(height: BottomWave.height + 20),
+                      // Register button lives in the floating action bar
+                      // below (see FloatingActionBar in the Stack) — this
+                      // just reserves clearance so the last field doesn't
+                      // sit underneath it.
+                      const SizedBox(height: 90),
                     ],
                   ),
                 ),
@@ -873,6 +840,38 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           _SuccessPanel(
             visible: _showSuccessPanel,
             opportunityName: widget.opportunity.name,
+          ),
+
+          // No leading icon here (unlike Program Details' bookmark) — this
+          // bar is just the single primary action.
+          FloatingActionBar(
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _submitRegistration,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      'Register',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+            ),
           ),
         ],
       ),

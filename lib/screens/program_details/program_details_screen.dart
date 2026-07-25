@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
+import '../../widgets/floating_action_bar.dart';
 import '../../widgets/program_card.dart' show ProgramThumbnail;
 
 class ProgramDetailsScreen extends StatefulWidget {
@@ -162,7 +163,7 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 10),
         Text(
           value,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
@@ -558,65 +559,40 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                 ],
               ),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: _divider)),
+            FloatingActionBar(
+              leading: IconButton(
+                onPressed: _toggleFavorite,
+                icon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (child, animation) =>
+                      ScaleTransition(scale: animation, child: child),
+                  child: Icon(
+                    _isFavorited ? Icons.bookmark : Icons.bookmark_border,
+                    key: ValueKey(_isFavorited),
+                    color: _isFavorited ? _primary : const Color(0xFF212121),
+                  ),
                 ),
-                child: SafeArea(
-                  top: false,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: _toggleFavorite,
-                        icon: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          transitionBuilder: (child, animation) =>
-                              ScaleTransition(scale: animation, child: child),
-                          child: Icon(
-                            _isFavorited
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            key: ValueKey(_isFavorited),
-                            color: _isFavorited
-                                ? const Color(0xFFF44336)
-                                : const Color(0xFF212121),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: SizedBox(
-                          height: 52,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _hasRegistered
-                                  ? AppColors.success
-                                  : _primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: _hasRegistered
-                                ? _onGiveFeedback
-                                : _onRegister,
-                            child: Text(
-                              _hasRegistered ? 'Give Feedback' : 'Register Now',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+              ),
+              child: SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _hasRegistered
+                        ? AppColors.success
+                        : _primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: _hasRegistered ? _onGiveFeedback : _onRegister,
+                  child: Text(
+                    _hasRegistered ? 'Give Feedback' : 'Register Now',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ),
