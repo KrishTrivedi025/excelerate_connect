@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../widgets/program_card.dart' show ProgramThumbnail;
@@ -32,70 +33,9 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   }
 
   void _onRegister() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (child, animation) =>
-                    ScaleTransition(scale: animation, child: child),
-                child: const Icon(
-                  Icons.check_circle,
-                  color: Color(0xFF4CAF50),
-                  size: 64,
-                  key: ValueKey('registered_icon'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Registered!',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'You are all set for ${widget.opportunity.name}.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: _textSecondary),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.of(sheetContext).pop();
-                    Navigator.of(context).popUntil(
-                      (route) => route.settings.name == '/programs' || route.isFirst,
-                    );
-                  },
-                  child: const Text(
-                    'Back to Programs',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    Navigator.of(context).pushNamed(
+      AppRouter.registration,
+      arguments: widget.opportunity,
     );
   }
 

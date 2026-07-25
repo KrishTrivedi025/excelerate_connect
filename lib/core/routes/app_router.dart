@@ -4,6 +4,7 @@ import '../../screens/home/home_screen.dart';
 import '../../screens/login/login_screen.dart';
 import '../../screens/program_details/program_details_screen.dart';
 import '../../screens/program_listing/program_listing_screen.dart';
+import '../../screens/registration/registration_screen.dart';
 import '../../screens/signup/signup_screen.dart';
 
 class AppRouter {
@@ -14,6 +15,7 @@ class AppRouter {
   static const String home = '/home';
   static const String programListing = '/programs';
   static const String programDetails = '/program-details';
+  static const String registration = '/registration';
 
   /// Bottom-nav tab routes — these transition with a slide+fade instead of
   /// the default platform push, since switching tabs isn't a forward
@@ -51,6 +53,11 @@ class AppRouter {
       case programDetails:
         if (settings.arguments is! Opportunity) return null;
         return (_) => ProgramDetailsScreen(
+          opportunity: settings.arguments as Opportunity,
+        );
+      case registration:
+        if (settings.arguments is! Opportunity) return null;
+        return (_) => RegistrationScreen(
           opportunity: settings.arguments as Opportunity,
         );
       default:

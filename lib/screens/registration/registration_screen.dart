@@ -35,6 +35,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   String? _howIntroduced;
   bool _isSubmitting = false;
 
+  // DOB and "how introduced" are custom pickers, not TextFormFields, so they
+  // don't get Form's automatic validator/error styling — these track
+  // whether a submit attempt has happened while they're still empty, so the
+  // fields can show the same red-border treatment Sign-Up's country picker
+  // uses instead of relying solely on a SnackBar the user might miss.
+  bool _dobTouchedInvalid = false;
+  bool _introducedTouchedInvalid = false;
+
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -67,7 +75,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
 
     if (picked != null && mounted) {
-      setState(() => _selectedDOB = picked);
+      setState(() {
+        _selectedDOB = picked;
+        _dobTouchedInvalid = false;
+      });
     }
   }
 
@@ -165,16 +176,29 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       title: 'How were you introduced?',
       options: _introducedOptions,
       selected: _howIntroduced,
-      onSelect: (value) => setState(() => _howIntroduced = value),
+      onSelect: (value) => setState(() {
+        _howIntroduced = value;
+        _introducedTouchedInvalid = false;
+      }),
     );
   }
 
   Future<void> _submitRegistration() async {
     FocusScope.of(context).unfocus();
 
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final isFormValid = _formKey.currentState?.validate() ?? false;
+    final isDobValid = _selectedDOB != null;
+    final isIntroducedValid =
+        _howIntroduced != null && _howIntroduced!.isNotEmpty;
 
-    if (_selectedDOB == null) {
+    setState(() {
+      _dobTouchedInvalid = !isDobValid;
+      _introducedTouchedInvalid = !isIntroducedValid;
+    });
+
+    if (!isFormValid) return;
+
+    if (!isDobValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select your Date of Birth'),
@@ -184,7 +208,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       return;
     }
 
-    if (_howIntroduced == null || _howIntroduced!.isEmpty) {
+    if (!isIntroducedValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select how you were introduced to this opportunity'),
@@ -458,7 +482,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(AppRadius.textField),
-                            border: Border.all(color: AppColors.divider),
+                            border: Border.all(
+                              color: _dobTouchedInvalid
+                                  ? AppColors.error
+                                  : AppColors.divider,
+                            ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -481,6 +509,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           ),
                         ),
                       ),
+                      if (_dobTouchedInvalid)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 6, left: 4),
+                          child: Text(
+                            'Please select your date of birth',
+                            style: TextStyle(color: AppColors.error, fontSize: 12),
+                          ),
+                        ),
                       const SizedBox(height: 14),
 
                       // FIELD 3: Email Address
@@ -576,7 +612,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(AppRadius.textField),
-                            border: Border.all(color: AppColors.divider),
+                            border: Border.all(
+                              color: _introducedTouchedInvalid
+                                  ? AppColors.error
+                                  : AppColors.divider,
+                            ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -599,6 +639,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           ),
                         ),
                       ),
+                      if (_introducedTouchedInvalid)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 6, left: 4),
+                          child: Text(
+                            'Please select how you were introduced',
+                            style: TextStyle(color: AppColors.error, fontSize: 12),
+                          ),
+                        ),
                       const SizedBox(height: 14),
 
                       // FIELD 6: Why do you want to apply? (optional, multiline)
