@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
 
@@ -95,66 +96,105 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
+      // Without this, the sheet is capped to Flutter's default bottom-sheet
+      // height and its content isn't scrollable — a 6-option list (or any
+      // list, on a shorter screen) overflows instead of scrolling.
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.hero)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.hero),
+        ),
       ),
       builder: (sheetContext) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: AppColors.textSecondary),
-                      onPressed: () => Navigator.of(sheetContext).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ...options.map((option) {
-                  final isSelected = selected == option;
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.wave.withValues(alpha: 0.4)
-                          : Colors.white,
-                      border: Border.all(
-                        color: isSelected ? AppColors.primary : AppColors.divider,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(sheetContext).size.height * 0.7,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
-                      borderRadius: BorderRadius.circular(AppRadius.textField),
-                    ),
-                    child: ListTile(
-                      title: Text(
-                        option,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: AppColors.textPrimary,
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close,
+                          color: AppColors.textSecondary,
                         ),
+                        onPressed: () => Navigator.of(sheetContext).pop(),
                       ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check_circle, color: AppColors.primary)
-                          : null,
-                      onTap: () {
-                        onSelect(option);
-                        Navigator.of(sheetContext).pop();
-                      },
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: options.map((option) {
+                          final isSelected = selected == option;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.wave.withValues(alpha: 0.4)
+                                  : Colors.white,
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.divider,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.textField,
+                              ),
+                            ),
+                            // ListTile paints its ink splash/background on the
+                            // nearest Material ancestor — without this, the
+                            // colored Container above hides those effects
+                            // entirely (a real Flutter framework warning).
+                            child: Material(
+                              type: MaterialType.transparency,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.textField,
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: ListTile(
+                                title: Text(
+                                  option,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                trailing: isSelected
+                                    ? const Icon(
+                                        Icons.check_circle,
+                                        color: AppColors.primary,
+                                      )
+                                    : null,
+                                onTap: () {
+                                  onSelect(option);
+                                  Navigator.of(sheetContext).pop();
+                                },
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
-                  );
-                }),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -211,7 +251,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     if (!isIntroducedValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select how you were introduced to this opportunity'),
+          content: Text(
+            'Please select how you were introduced to this opportunity',
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -234,10 +276,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.hero)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.hero),
+        ),
         title: const Text(
           'Registration Confirmed!',
-          style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -245,7 +292,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           children: [
             Text(
               'Student: ${_firstNameController.text} ${_lastNameController.text}',
-              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textPrimary,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -259,18 +309,40 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             const SizedBox(height: 4),
             Text(
               'Email: ${_emailController.text}',
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
             ),
             if (_howIntroduced != null) ...[
               const SizedBox(height: 4),
               Text(
                 'Source: $_howIntroduced',
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              Navigator.of(context).pushNamed(
+                AppRouter.feedback,
+                arguments: widget.opportunity.name,
+              );
+            },
+            child: const Text(
+              'Give Feedback',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
           TextButton(
             onPressed: () {
               // Close the dialog, then pop the registration screen itself —
@@ -282,7 +354,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             },
             child: const Text(
               'Done',
-              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
             ),
           ),
         ],
@@ -333,7 +408,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -380,7 +458,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       const SizedBox(height: 4),
                       const Text(
                         'Enter your details below to register for your selected course.',
-                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: 16),
 
@@ -388,12 +469,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // passed in via navigation arguments, not a hardcoded
                       // title.
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.wave.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(AppRadius.textField),
+                          borderRadius: BorderRadius.circular(
+                            AppRadius.textField,
+                          ),
                           border: Border.all(
-                            color: AppColors.primaryLight.withValues(alpha: 0.5),
+                            color: AppColors.primaryLight.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                         ),
                         child: Row(
@@ -434,7 +522,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // FIELD 1: Full Name
                       const Text(
                         'Full Name',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Row(
@@ -447,7 +538,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 style: const TextStyle(fontSize: 13),
                                 decoration: _fieldDecoration('First Name'),
                                 validator: (val) =>
-                                    (val == null || val.trim().isEmpty) ? 'Required' : null,
+                                    (val == null || val.trim().isEmpty)
+                                    ? 'Required'
+                                    : null,
                               ),
                             ),
                           ),
@@ -460,7 +553,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 style: const TextStyle(fontSize: 13),
                                 decoration: _fieldDecoration('Last Name'),
                                 validator: (val) =>
-                                    (val == null || val.trim().isEmpty) ? 'Required' : null,
+                                    (val == null || val.trim().isEmpty)
+                                    ? 'Required'
+                                    : null,
                               ),
                             ),
                           ),
@@ -471,7 +566,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // FIELD 2: Date of Birth
                       const Text(
                         'Date of Birth',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       GestureDetector(
@@ -481,7 +579,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(AppRadius.textField),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.textField,
+                            ),
                             border: Border.all(
                               color: _dobTouchedInvalid
                                   ? AppColors.error
@@ -514,7 +614,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           padding: EdgeInsets.only(top: 6, left: 4),
                           child: Text(
                             'Please select your date of birth',
-                            style: TextStyle(color: AppColors.error, fontSize: 12),
+                            style: TextStyle(
+                              color: AppColors.error,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       const SizedBox(height: 14),
@@ -522,7 +625,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // FIELD 3: Email Address
                       const Text(
                         'Email Address',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       SizedBox(
@@ -533,7 +639,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           style: const TextStyle(fontSize: 13),
                           decoration: _fieldDecoration('Enter your email'),
                           validator: (val) {
-                            if (val == null || val.trim().isEmpty) return 'Email is required';
+                            if (val == null || val.trim().isEmpty) {
+                              return 'Email is required';
+                            }
                             if (!_emailRegex.hasMatch(val.trim())) {
                               return 'Enter a valid email address';
                             }
@@ -546,7 +654,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // FIELD 4: Gender (optional)
                       const Text(
                         'Gender (optional)',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       GestureDetector(
@@ -556,7 +667,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(AppRadius.textField),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.textField,
+                            ),
                             border: Border.all(color: AppColors.divider),
                           ),
                           child: Row(
@@ -611,7 +724,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(AppRadius.textField),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.textField,
+                            ),
                             border: Border.all(
                               color: _introducedTouchedInvalid
                                   ? AppColors.error
@@ -644,7 +759,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           padding: EdgeInsets.only(top: 6, left: 4),
                           child: Text(
                             'Please select how you were introduced',
-                            style: TextStyle(color: AppColors.error, fontSize: 12),
+                            style: TextStyle(
+                              color: AppColors.error,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       const SizedBox(height: 14),
@@ -652,7 +770,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // FIELD 6: Why do you want to apply? (optional, multiline)
                       const Text(
                         "Why do you want to apply for this course?",
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       TextFormField(
@@ -661,8 +782,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         minLines: 2,
                         maxLength: 300,
                         style: const TextStyle(fontSize: 13),
-                        decoration:
-                            _fieldDecoration('Tell us about your goals and motivation...'),
+                        decoration: _fieldDecoration(
+                          'Tell us about your goals and motivation...',
+                        ),
                       ),
                     ],
                   ),
@@ -674,9 +796,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               child: Stack(
                 alignment: Alignment.bottomCenter,
                 children: [
-                  Positioned.fill(child: CustomPaint(painter: _BottomWavePainter())),
+                  Positioned.fill(
+                    child: CustomPaint(painter: _BottomWavePainter()),
+                  ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 24, right: 24, bottom: 20),
+                    padding: const EdgeInsets.only(
+                      left: 24,
+                      right: 24,
+                      bottom: 20,
+                    ),
                     child: SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -687,7 +815,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           elevation: 4,
                           shadowColor: AppColors.primary.withValues(alpha: 0.3),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.button),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.button,
+                            ),
                           ),
                         ),
                         child: _isSubmitting

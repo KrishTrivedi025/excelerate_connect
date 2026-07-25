@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import '../../data/mock_data.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/login/login_screen.dart';
+import '../../screens/feedback/feedback_screen.dart';
 import '../../screens/program_details/program_details_screen.dart';
 import '../../screens/program_listing/program_listing_screen.dart';
 import '../../screens/registration/registration_screen.dart';
 import '../../screens/signup/signup_screen.dart';
+
 class AppRouter {
   const AppRouter._();
 
@@ -15,6 +17,7 @@ class AppRouter {
   static const String programListing = '/programs';
   static const String programDetails = '/program-details';
   static const String registration = '/registration';
+  static const String feedback = '/feedback';
 
   /// Bottom-nav tab routes — these transition with a slide+fade instead of
   /// the default platform push, since switching tabs isn't a forward
@@ -59,6 +62,13 @@ class AppRouter {
         return (_) => RegistrationScreen(
           opportunity: settings.arguments as Opportunity,
         );
+      case feedback:
+        // Optional: a course name to show in the form. Falls back to the
+        // widget's own default when navigated to without one.
+        final courseName = settings.arguments;
+        return (_) => courseName is String
+            ? FeedbackScreen(courseName: courseName)
+            : const FeedbackScreen();
       default:
         return null;
     }

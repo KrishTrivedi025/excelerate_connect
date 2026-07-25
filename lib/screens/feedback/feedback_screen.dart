@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/routes/app_router.dart'; // TODO: adjust to your actual AppRouter import path
 
 /// Feedback screen for a completed course.
 /// Matches the finalized premium preview: mood selector, star rating,
@@ -29,10 +29,8 @@ class _FeedbackScreenState extends State<FeedbackScreen>
     with TickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _nameController =
-      TextEditingController(text: 'Sree');
-  final TextEditingController _emailController =
-      TextEditingController(text: 'sree@example.com');
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _commentsController = TextEditingController();
 
   static const List<String> _moods = ['😍', '😊', '🙂', '😐', '😞'];
@@ -48,7 +46,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
     'Mentorship',
     'Community',
   ];
-  final Set<String> _selectedChips = {'Flutter Basics', 'Projects'};
+  final Set<String> _selectedChips = {};
 
   static const List<String> _recommendOptions = ['Yes', 'Maybe', 'No'];
   String _selectedRecommend = 'Yes';
@@ -158,8 +156,8 @@ class _FeedbackScreenState extends State<FeedbackScreen>
               child: _Blob(
                 size: 180,
                 colors: [
-                  AppColors.primaryLight.withOpacity(0.35),
-                  AppColors.primary.withOpacity(0.35),
+                  AppColors.primaryLight.withValues(alpha: 0.35),
+                  AppColors.primary.withValues(alpha: 0.35),
                 ],
               ),
             ),
@@ -169,7 +167,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
               child: _Blob(
                 size: 110,
                 colors: [
-                  const Color(0xFFFFD9B3).withOpacity(0.6),
+                  const Color(0xFFFFD9B3).withValues(alpha: 0.6),
                   Colors.transparent,
                 ],
               ),
@@ -219,7 +217,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 250),
                 opacity: _showSuccessSheet ? 1 : 0,
-                child: Container(color: Colors.black.withOpacity(0.5)),
+                child: Container(color: Colors.black.withValues(alpha: 0.5)),
               ),
             ),
 
@@ -264,7 +262,8 @@ class _FeedbackScreenState extends State<FeedbackScreen>
               ),
               SizedBox(height: AppSpacing.xs),
               Text(
-                'Your feedback helps us improve future learning experiences.',
+                'Your feedback on ${widget.courseName} helps us improve '
+                'future learning experiences.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -321,7 +320,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                         borderRadius: BorderRadius.circular(AppRadius.card),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.textPrimary.withOpacity(0.06),
+                            color: AppColors.textPrimary.withValues(alpha: 0.06),
                             blurRadius: 16,
                             offset: const Offset(0, 4),
                           ),
@@ -427,6 +426,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                       controller: _commentsController,
                       maxLines: 4,
                       hintText: 'Tell us what you loved or what we can improve...',
+                      keyboardType: TextInputType.multiline,
                       textInputAction: TextInputAction.newline,
                     ),
                     SizedBox(height: AppSpacing.xl),
@@ -496,7 +496,11 @@ class _FeedbackScreenState extends State<FeedbackScreen>
   /// Slides up from the bottom over the (still visible, dimmed) form —
   /// it does NOT take over the whole screen.
   Widget _buildSuccessSheet(BuildContext context) {
-    final sheetHeight = MediaQuery.of(context).size.height * 0.30;
+    // 30% of screen height on taller phones, but never below what the
+    // content (icon + title + subtitle + button + padding) actually needs —
+    // on short screens the plain 30% figure clips/overflows the button.
+    final sheetHeight = (MediaQuery.of(context).size.height * 0.30)
+        .clamp(280.0, double.infinity);
 
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 320),
@@ -637,7 +641,7 @@ class _HeaderBadge extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.35),
+            color: AppColors.primary.withValues(alpha: 0.35),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -668,7 +672,7 @@ class _MoodButton extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         transform: isSelected
-            ? (Matrix4.identity()..scale(1.08))
+            ? Matrix4.identity().scaledByDouble(1.08, 1.08, 1.08, 1)
             : Matrix4.identity(),
         transformAlignment: Alignment.center,
         height: 56,
@@ -682,8 +686,8 @@ class _MoodButton extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? AppColors.primary.withOpacity(0.3)
-                  : AppColors.textPrimary.withOpacity(0.06),
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : AppColors.textPrimary.withValues(alpha: 0.06),
               blurRadius: isSelected ? 18 : 14,
               offset: const Offset(0, 4),
             ),
@@ -733,7 +737,7 @@ class _SelectableChip extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -786,7 +790,7 @@ class _CardTextField extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.card),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withOpacity(0.05),
+            color: AppColors.textPrimary.withValues(alpha: 0.05),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -802,7 +806,7 @@ class _CardTextField extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.4,
-                color: AppColors.textSecondary.withOpacity(0.8),
+                color: AppColors.textSecondary.withValues(alpha: 0.8),
               ),
             ),
             SizedBox(height: AppSpacing.xs),
@@ -931,7 +935,7 @@ class _GradientSubmitButton extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.4),
+              color: AppColors.primary.withValues(alpha: 0.4),
               blurRadius: 30,
               offset: const Offset(0, 14),
             ),
