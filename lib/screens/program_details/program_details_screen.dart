@@ -177,10 +177,10 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   Widget _borderedSection({required String title, required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _divider),
       ),
       child: Column(

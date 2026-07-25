@@ -419,29 +419,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         ),
                         child: Row(
                           children: [
-                            Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
-                              // Drop a Lordicon-exported Lottie file at
-                              // assets/icons/course_badge.json to replace
-                              // this fallback glyph — same pattern as the
-                              // bottom nav bar's icons.
+                            // Plain dark line icon, no background badge/tint —
+                            // matches the bottom nav bar's own icon style.
+                            // Drop a Lordicon-exported Lottie file at
+                            // assets/icons/course_badge.json to replace the
+                            // fallback glyph below, same pattern as the nav
+                            // bar's icons.
+                            SizedBox(
+                              width: 22,
+                              height: 22,
                               child: Lottie.asset(
                                 'assets/icons/course_badge.json',
-                                width: 18,
-                                height: 18,
+                                width: 22,
+                                height: 22,
                                 fit: BoxFit.contain,
                                 repeat: false,
                                 errorBuilder: (context, error, stackTrace) =>
                                     const Icon(
-                                      Icons.auto_stories_rounded,
-                                      size: 16,
-                                      color: AppColors.primary,
+                                      Icons.auto_stories_outlined,
+                                      size: 20,
+                                      color: AppColors.textPrimary,
                                     ),
                               ),
                             ),
@@ -816,7 +813,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // below (see FloatingActionBar in the Stack) — this
                       // just reserves clearance so the last field doesn't
                       // sit underneath it.
-                      const SizedBox(height: 90),
+                      const SizedBox(height: 110),
                     ],
                   ),
                 ),
@@ -824,27 +821,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ),
           ),
 
-          // Dimmed backdrop behind the success panel.
-          IgnorePointer(
-            ignoring: !_showSuccessPanel,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 250),
-              opacity: _showSuccessPanel ? 1 : 0,
-              child: Container(color: Colors.black.withValues(alpha: 0.45)),
-            ),
-          ),
-
-          // Auto-dismissing (5s) success panel — slides up from the bottom,
-          // then Navigator.pop(true) (scheduled in _submitRegistration)
-          // returns to Program Details on its own; no manual button needed.
-          _SuccessPanel(
-            visible: _showSuccessPanel,
-            opportunityName: widget.opportunity.name,
-          ),
-
           // No leading icon here (unlike Program Details' bookmark) — this
-          // bar is just the single primary action.
+          // bar is just the single primary action. Placed *before* the
+          // backdrop/success panel below (and hidden via `visible` once the
+          // panel shows) so it can never paint on top of them — Stack
+          // paints later children over earlier ones, and this used to be
+          // last, which is exactly what caused it to visibly overlap the
+          // success panel.
           FloatingActionBar(
+            visible: !_showSuccessPanel,
             child: ElevatedButton(
               onPressed: _isSubmitting ? null : _submitRegistration,
               style: ElevatedButton.styleFrom(
@@ -872,6 +857,24 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ),
                     ),
             ),
+          ),
+
+          // Dimmed backdrop behind the success panel.
+          IgnorePointer(
+            ignoring: !_showSuccessPanel,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 250),
+              opacity: _showSuccessPanel ? 1 : 0,
+              child: Container(color: Colors.black.withValues(alpha: 0.45)),
+            ),
+          ),
+
+          // Auto-dismissing (5s) success panel — slides up from the bottom,
+          // then Navigator.pop(true) (scheduled in _submitRegistration)
+          // returns to Program Details on its own; no manual button needed.
+          _SuccessPanel(
+            visible: _showSuccessPanel,
+            opportunityName: widget.opportunity.name,
           ),
         ],
       ),
