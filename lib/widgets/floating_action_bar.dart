@@ -31,10 +31,10 @@ class FloatingActionBar extends StatelessWidget {
     this.visible = true,
   });
 
-  static const double _cornerRadius = 28;
+  static const double _cornerRadius = 40;
 
   // Blur strength — raise for a blurrier bar, lower for clearer.
-  static const double _blurSigma = 13;
+  static const double _blurSigma = 4;
 
   @override
   Widget build(BuildContext context) {

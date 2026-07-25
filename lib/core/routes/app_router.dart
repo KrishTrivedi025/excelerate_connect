@@ -63,12 +63,10 @@ class AppRouter {
           opportunity: settings.arguments as Opportunity,
         );
       case feedback:
-        // Optional: a course name to show in the form. Falls back to the
-        // widget's own default when navigated to without one.
-        final courseName = settings.arguments;
-        return (_) => courseName is String
-            ? FeedbackScreen(courseName: courseName)
-            : const FeedbackScreen();
+        if (settings.arguments is! Opportunity) return null;
+        return (_) => FeedbackScreen(
+          opportunity: settings.arguments as Opportunity,
+        );
       default:
         return null;
     }

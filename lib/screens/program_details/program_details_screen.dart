@@ -48,7 +48,7 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   void _onGiveFeedback() {
     Navigator.of(
       context,
-    ).pushNamed(AppRouter.feedback, arguments: widget.opportunity.name);
+    ).pushNamed(AppRouter.feedback, arguments: widget.opportunity);
   }
 
   Widget _metaChip(String label) {
