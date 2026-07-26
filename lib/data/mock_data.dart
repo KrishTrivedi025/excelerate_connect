@@ -35,19 +35,9 @@ enum OpportunityType {
   engagement,
 }
 
-enum LocationType {
-  inPerson,
-  virtual,
-  remote,
-}
+enum LocationType { inPerson, virtual, remote }
 
-enum DurationType {
-  hours,
-  days,
-  weeks,
-  months,
-  years,
-}
+enum DurationType { hours, days, weeks, months, years }
 
 enum ApplicationStatus {
   applied,
@@ -64,12 +54,7 @@ enum ApplicationStatus {
 }
 
 /// NEW — used by Announcement model and Home Screen card color/icon logic
-enum AnnouncementType {
-  general,
-  urgent,
-  opportunity,
-  system,
-}
+enum AnnouncementType { general, urgent, opportunity, system }
 
 // =============================================================
 // MODELS — unchanged from original
@@ -248,7 +233,6 @@ class Opportunity {
   final String name;
   final OpportunityType type;
   final String imageUrl;
-  final String imageType;
   final String shortDescription;
   final String? fullDescription;
   final List<String> learningOutcomes;
@@ -282,7 +266,6 @@ class Opportunity {
     required this.name,
     required this.type,
     required this.imageUrl,
-    this.imageType = 'flutter',
     required this.shortDescription,
     this.fullDescription,
     this.learningOutcomes = const [],
@@ -388,21 +371,21 @@ class Opportunity {
   /// Flat map for ProgramCard widget — avoids passing full Opportunity object
   /// where only listing-level fields are needed.
   Map<String, dynamic> toCardData() => {
-        'id': id,
-        'imageUrl': imageUrl,
-        'name': name,
-        'categoryLabel': categoryLabel,
-        'durationLabel': durationLabel,
-        'scholarshipDisplay': scholarshipDisplay,
-        'sponsorName': sponsor?.name,
-        'skillNames': skills.map((s) => s.name).toList(),
-        'locationLabel': locationLabel,
-        'role': role,
-        'isFavorited': isFavorited,
-        'isEnrolled': isEnrolled,
-        'userStatus': userStatus,
-        'progressPercentage': progressPercentage,
-      };
+    'id': id,
+    'imageUrl': imageUrl,
+    'name': name,
+    'categoryLabel': categoryLabel,
+    'durationLabel': durationLabel,
+    'scholarshipDisplay': scholarshipDisplay,
+    'sponsorName': sponsor?.name,
+    'skillNames': skills.map((s) => s.name).toList(),
+    'locationLabel': locationLabel,
+    'role': role,
+    'isFavorited': isFavorited,
+    'isEnrolled': isEnrolled,
+    'userStatus': userStatus,
+    'progressPercentage': progressPercentage,
+  };
 }
 
 // =============================================================
@@ -416,7 +399,6 @@ final List<Opportunity> mockOpportunities = [
     name: 'Mobile App Development with Flutter',
     type: OpportunityType.internship,
     imageUrl: 'assets/images/flutter_card.png',
-    imageType: 'flutter',
     shortDescription:
         'Build cross-platform mobile apps using Flutter and Dart. Learn widget trees, state management, and deploy your first app.',
     fullDescription:
@@ -469,14 +451,19 @@ final List<Opportunity> mockOpportunities = [
     fee: 0,
     currencyType: 'USD',
     scholarship: 500,
-    rewards: const ['Certificate of Completion', 'LinkedIn Badge', 'Scholarship Award'],
+    rewards: const [
+      'Certificate of Completion',
+      'LinkedIn Badge',
+      'Scholarship Award',
+    ],
     duration: 6,
     durationType: DurationType.weeks,
     modules: [
       Module(
         id: 'mod_flutter_1',
         title: 'Welcome & Onboarding',
-        description: 'Get familiar with the program structure and expectations.',
+        description:
+            'Get familiar with the program structure and expectations.',
         pages: [
           ModulePage(
             id: 'page_flutter_1_1',
@@ -498,7 +485,8 @@ final List<Opportunity> mockOpportunities = [
       Module(
         id: 'mod_flutter_2',
         title: 'Flutter Fundamentals',
-        description: 'Set up your environment and understand core Flutter concepts.',
+        description:
+            'Set up your environment and understand core Flutter concepts.',
         pages: [
           ModulePage(
             id: 'page_flutter_2_1',
@@ -610,10 +598,9 @@ final List<Opportunity> mockOpportunities = [
   // 3. Data Science with Python — Not Started
   Opportunity(
     id: 'opp_003',
-    name: 'Data Science Job Simulation',
-    type: OpportunityType.jobSimulation,
-    imageUrl: 'assets/images/data_card.png',
-    imageType: 'datascience',
+    name: 'Data Science with Python',
+    type: OpportunityType.course,
+    imageUrl: 'assets/images/datascience_card.png',
     shortDescription:
         'Master data analysis, visualization, and machine learning with Python. '
         'Clean data, create charts, and build predictive models.',
@@ -669,10 +656,9 @@ final List<Opportunity> mockOpportunities = [
   // 4. UI/UX Design Challenge — Not Started
   Opportunity(
     id: 'opp_004',
-    name: 'UI/UX Design Masterclass',
-    type: OpportunityType.masterclass,
+    name: 'UI/UX Design Challenge 2026',
+    type: OpportunityType.competition,
     imageUrl: 'assets/images/design_card.png',
-    imageType: 'design',
     shortDescription:
         'Redesign the Excelerate mobile experience and win prizes. '
         'Open to individuals and teams.',
@@ -732,10 +718,9 @@ final List<Opportunity> mockOpportunities = [
   // 5. Global Leadership Summit — Completed
   Opportunity(
     id: 'opp_005',
-    name: 'Excelerate Connect 2026',
+    name: 'Global Leadership Summit 2026',
     type: OpportunityType.event,
-    imageUrl: 'assets/images/event_card.png',
-    imageType: 'business',
+    imageUrl: 'assets/images/leadership_card.png',
     shortDescription:
         'A one-day virtual summit featuring talks from global leaders on '
         'innovation, strategy, and personal growth.',
@@ -788,8 +773,9 @@ final List<Opportunity> mockOpportunities = [
 /// Convenience filter — opportunities the user has enrolled in.
 /// Used by Home Screen "My Programs" section.
 /// opp_001 (in progress) + opp_002 (completed) + opp_005 (completed) = 3 items.
-final List<Opportunity> mockEnrolledOpportunities =
-    mockOpportunities.where((o) => o.isEnrolled).toList();
+final List<Opportunity> mockEnrolledOpportunities = mockOpportunities
+    .where((o) => o.isEnrolled)
+    .toList();
 
 // =============================================================
 // MOCK USER — Home Screen greeting & stats

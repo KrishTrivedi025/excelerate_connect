@@ -81,11 +81,13 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
     );
 
     try {
-      final fetchedProgram = await OpportunityService.fetchOpportunityById(program.id);
-      
+      final fetchedProgram = await OpportunityService.fetchOpportunityById(
+        program.id,
+      );
+
       if (!mounted) return;
-      Navigator.pop(context); 
-      
+      Navigator.pop(context);
+
       Navigator.pushNamed(
         context,
         AppRouter.programDetails,
@@ -93,24 +95,36 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context); 
-      
+      Navigator.pop(context);
+
       showModalBottomSheet(
         context: context,
         backgroundColor: AppColors.background,
-        builder: (sheetContext) => Padding(
-          padding: EdgeInsets.only(
-            top: 24.0,
-            left: 24.0,
-            right: 24.0,
-            bottom: 24.0 + MediaQuery.of(context).padding.bottom,
+        // Without this the sheet is capped to its default (non-scrollable)
+        // max height, and ErrorRetryCard's content — icon, title, message,
+        // full-width button, all with generous padding — genuinely
+        // overflows it on shorter screens.
+        isScrollControlled: true,
+        builder: (sheetContext) => ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(sheetContext).size.height * 0.7,
           ),
-          child: ErrorRetryCard(
-            message: e.toString(),
-            onRetry: () {
-              Navigator.pop(sheetContext); // Close the error bottom sheet
-              _openProgramDetails(program); // Retry the fetch immediately
-            },
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: 24.0,
+                left: 24.0,
+                right: 24.0,
+                bottom: 24.0 + MediaQuery.of(context).padding.bottom,
+              ),
+              child: ErrorRetryCard(
+                message: e.toString(),
+                onRetry: () {
+                  Navigator.pop(sheetContext); // Close the error bottom sheet
+                  _openProgramDetails(program); // Retry the fetch immediately
+                },
+              ),
+            ),
           ),
         ),
       );
@@ -140,7 +154,6 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return PopScope(
       // This tab was reached via goToTab's pushReplacement, so it is the
       // only entry on the Navigator stack — there is nothing beneath it for
@@ -355,13 +368,18 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                     FutureBuilder<List<Opportunity>>(
                       future: _opportunitiesFuture,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const SliverFillRemaining(
                             hasScrollBody: false,
-                            child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primary,
+                              ),
+                            ),
                           );
                         }
-                        
+
                         if (snapshot.hasError) {
                           return SliverFillRemaining(
                             hasScrollBody: false,
@@ -370,7 +388,8 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                                 padding: const EdgeInsets.all(24.0),
                                 child: ErrorRetryCard(
                                   message: snapshot.error.toString(),
-                                  onRetry: () => setState(() => _fetchOpportunities()),
+                                  onRetry: () =>
+                                      setState(() => _fetchOpportunities()),
                                 ),
                               ),
                             ),
@@ -401,13 +420,17 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                               return TweenAnimationBuilder<double>(
                                 tween: Tween(begin: 0.0, end: 1.0),
                                 duration: Duration(
-                                  milliseconds: 380 + (index * 90).clamp(0, 450),
+                                  milliseconds:
+                                      380 + (index * 90).clamp(0, 450),
                                 ),
                                 curve: Curves.easeOutCubic,
                                 builder: (context, value, child) {
                                   return Transform.translate(
                                     offset: Offset(0, 24 * (1 - value)),
-                                    child: Opacity(opacity: value, child: child),
+                                    child: Opacity(
+                                      opacity: value,
+                                      child: child,
+                                    ),
                                   );
                                 },
                                 child: Padding(

@@ -28,9 +28,7 @@ class ErrorRetryCard extends StatelessWidget {
                 offset: const Offset(0, 20),
               ),
             ],
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.1),
-            ),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
           ),
           padding: const EdgeInsets.all(AppSpacing.xxl),
           child: Column(
@@ -74,12 +72,12 @@ class ErrorRetryCard extends StatelessWidget {
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh_rounded, size: 20),
                   label: const Text(
-                    'Try Again', 
+                    'Try Again',
                     style: TextStyle(
-                      fontSize: 16, 
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
-                    )
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
