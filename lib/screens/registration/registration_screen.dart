@@ -38,6 +38,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   DateTime? _selectedDOB;
   String? _selectedGender;
   String? _howIntroduced;
+
   bool _isSubmitting = false;
 
   // DOB and "how introduced" are custom pickers, not TextFormFields, so they
@@ -317,7 +318,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       });
       _successCountdown.forward(from: 0);
     } finally {
-      if (mounted && _isSubmitting) setState(() => _isSubmitting = false);
+      if (mounted && _isSubmitting) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 

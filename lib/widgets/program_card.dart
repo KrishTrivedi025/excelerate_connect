@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/routes/app_router.dart';
 import '../core/theme/app_theme.dart';
 import '../data/mock_data.dart';
 
@@ -152,13 +153,10 @@ class ProgramCard extends StatelessWidget {
                       child: SizedBox(
                         height: 36,
                         child: OutlinedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Registration — coming soon'),
-                              ),
-                            );
-                          },
+                          onPressed: () => Navigator.of(context).pushNamed(
+                            AppRouter.registration,
+                            arguments: program,
+                          ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: _kListingActionColor,
                             side: const BorderSide(color: _kListingActionColor),

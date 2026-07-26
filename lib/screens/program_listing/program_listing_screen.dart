@@ -3,6 +3,8 @@ import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../services/opportunity_service.dart';
+import '../../widgets/animated_entrance.dart';
+import '../../widgets/branded_loader.dart';
 import '../../widgets/error_retry_card.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/flexible_asset_image.dart';
@@ -70,65 +72,15 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
     await _opportunitiesFuture.catchError((_) => <Opportunity>[]);
   }
 
-  /// Category label for filter chip display
-  Future<void> _openProgramDetails(Opportunity program) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      ),
+  // Program Details now fetches its own fresh copy by ID as soon as it
+  // opens (so it always reflects the latest data, not whatever this list
+  // last fetched) — so this just navigates immediately, no pre-fetch here.
+  void _openProgramDetails(Opportunity program) {
+    Navigator.pushNamed(
+      context,
+      AppRouter.programDetails,
+      arguments: program,
     );
-
-    try {
-      final fetchedProgram = await OpportunityService.fetchOpportunityById(
-        program.id,
-      );
-
-      if (!mounted) return;
-      Navigator.pop(context);
-
-      Navigator.pushNamed(
-        context,
-        AppRouter.programDetails,
-        arguments: fetchedProgram,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pop(context);
-
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: AppColors.background,
-        // Without this the sheet is capped to its default (non-scrollable)
-        // max height, and ErrorRetryCard's content — icon, title, message,
-        // full-width button, all with generous padding — genuinely
-        // overflows it on shorter screens.
-        isScrollControlled: true,
-        builder: (sheetContext) => ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(sheetContext).size.height * 0.7,
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.only(
-                top: 24.0,
-                left: 24.0,
-                right: 24.0,
-                bottom: 24.0 + MediaQuery.of(context).padding.bottom,
-              ),
-              child: ErrorRetryCard(
-                message: e.toString(),
-                onRetry: () {
-                  Navigator.pop(sheetContext); // Close the error bottom sheet
-                  _openProgramDetails(program); // Retry the fetch immediately
-                },
-              ),
-            ),
-          ),
-        ),
-      );
-    }
   }
 
   String _getCategoryLabel(OpportunityType type) {
@@ -372,11 +324,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                             ConnectionState.waiting) {
                           return const SliverFillRemaining(
                             hasScrollBody: false,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: AppColors.primary,
-                              ),
-                            ),
+                            child: Center(child: BrandedLoader()),
                           );
                         }
 
@@ -417,22 +365,8 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                               index,
                             ) {
                               final program = filteredList[index];
-                              return TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0.0, end: 1.0),
-                                duration: Duration(
-                                  milliseconds:
-                                      380 + (index * 90).clamp(0, 450),
-                                ),
-                                curve: Curves.easeOutCubic,
-                                builder: (context, value, child) {
-                                  return Transform.translate(
-                                    offset: Offset(0, 24 * (1 - value)),
-                                    child: Opacity(
-                                      opacity: value,
-                                      child: child,
-                                    ),
-                                  );
-                                },
+                              return AnimatedEntrance(
+                                index: index,
                                 child: Padding(
                                   padding: const EdgeInsets.only(
                                     bottom: AppSpacing.md,

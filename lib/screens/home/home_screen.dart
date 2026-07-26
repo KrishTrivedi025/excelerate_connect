@@ -5,9 +5,13 @@ import 'package:flutter/material.dart';
 import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
+import '../../services/opportunity_service.dart';
 import '../../widgets/ai_chat_button.dart';
+import '../../widgets/animated_entrance.dart';
 import '../../widgets/announcement_card.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import '../../widgets/branded_loader.dart';
+import '../../widgets/error_retry_card.dart';
 import '../../widgets/flexible_asset_image.dart';
 import '../../widgets/hero_banner.dart';
 import '../../widgets/program_card.dart';
@@ -81,9 +85,24 @@ class _HomeScreenState extends State<HomeScreen> {
     '35 mins',
   ];
 
+  // Continue Learning, Announcements, and Featured Programs all key off
+  // this one future — pull-to-refresh re-fetches it, and each section shows
+  // the branded loader while it's in flight, exactly like Program Listing.
+  late Future<List<Opportunity>> _homeDataFuture;
+
+  void _fetchHomeData() {
+    _homeDataFuture = OpportunityService.fetchOpportunities();
+  }
+
+  Future<void> _handleRefresh() async {
+    setState(_fetchHomeData);
+    await _homeDataFuture.catchError((_) => <Opportunity>[]);
+  }
+
   @override
   void initState() {
     super.initState();
+    _fetchHomeData();
     // Attention bubble appears a beat after landing on the screen, and
     // dismisses itself after a while if the user hasn't tapped it.
     _chatHintShowTimer = Timer(const Duration(seconds: 2), () {
@@ -106,15 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredPrograms = mockOpportunities.where((program) {
-      final matchesCategory =
-          selectedCategory == null || program.type == selectedCategory;
-      final matchesSearch = program.name.toLowerCase().contains(
-        searchQuery.toLowerCase(),
-      );
-      return matchesCategory && matchesSearch;
-    }).toList();
-
     return PopScope(
       // Home is the app's root tab (Login/Sign-Up were replaced, not pushed,
       // on the way here) — there is nothing beneath it to pop back to, so
@@ -131,95 +141,162 @@ class _HomeScreenState extends State<HomeScreen> {
           bottom: false,
           child: Stack(
             children: [
-              CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                        vertical: AppSpacing.sm,
-                      ),
-                      child: TopHeaderBar(
-                        notificationCount: notificationCount,
-                        onNotificationTap: () {
-                          setState(() => notificationCount = 0);
-                          _showSnackBar('Notifications marked as read!');
-                        },
-                        onProfileTap: () =>
-                            _showSnackBar('Account profile menu! 👤'),
-                      ),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    // Full width, edge-to-edge — no side padding, no
-                    // overlaid text, just the hero image as a plain
-                    // rectangle (the image already carries its own copy).
-                    child: HeroBanner(
-                      image: FlexibleAssetImage(
-                        baseName: 'assets/images/home_hero',
-                        fit: BoxFit.cover,
-                        // Anchors the crop to the top of the image instead of
-                        // centering it, so any necessary cropping trims the
-                        // bottom rather than cutting into the top content.
-                        alignment: Alignment.topCenter,
-                        fallback: (context) =>
-                            const ColoredBox(color: AppColors.primary),
+              RefreshIndicator(
+                onRefresh: _handleRefresh,
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
+                        ),
+                        child: TopHeaderBar(
+                          notificationCount: notificationCount,
+                          onNotificationTap: () {
+                            setState(() => notificationCount = 0);
+                            _showSnackBar('Notifications marked as read!');
+                          },
+                          onProfileTap: () =>
+                              _showSnackBar('Account profile menu! 👤'),
+                        ),
                       ),
                     ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: AppSpacing.lg),
-                          _buildGreeting(),
-                          const SizedBox(height: AppSpacing.base),
-                          _buildSearchBar(),
-                          const SizedBox(height: AppSpacing.lg),
-                          _buildContinueLearningHeader(),
-                          const SizedBox(height: AppSpacing.sm),
-                          _buildContinueLearningSection(),
-                          const SizedBox(height: AppSpacing.xl),
-                          _buildAnnouncementsSection(),
-                          const SizedBox(height: AppSpacing.xl),
-                          _buildExploreProgramsHeader(),
-                          const SizedBox(height: AppSpacing.sm),
-                          _buildCategoryFilterPills(),
-                          const SizedBox(height: AppSpacing.lg),
-                          _buildFeaturedProgramsHeader(),
-                          const SizedBox(height: AppSpacing.sm),
-                        ],
+                    SliverToBoxAdapter(
+                      // Full width, edge-to-edge — no side padding, no
+                      // overlaid text, just the hero image as a plain
+                      // rectangle (the image already carries its own copy).
+                      child: HeroBanner(
+                        image: FlexibleAssetImage(
+                          baseName: 'assets/images/home_hero',
+                          fit: BoxFit.cover,
+                          // Anchors the crop to the top of the image instead of
+                          // centering it, so any necessary cropping trims the
+                          // bottom rather than cutting into the top content.
+                          alignment: Alignment.topCenter,
+                          fallback: (context) =>
+                              const ColoredBox(color: AppColors.primary),
+                        ),
                       ),
                     ),
-                  ),
-                  filteredPrograms.isNotEmpty
-                      ? SliverPadding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.lg,
-                          ),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                            ) {
-                              final program = filteredPrograms[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(
-                                  bottom: AppSpacing.md,
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: AppSpacing.lg),
+                            _buildGreeting(),
+                            const SizedBox(height: AppSpacing.base),
+                            _buildSearchBar(),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Everything below the search bar — Continue Learning,
+                    // Announcements, and Featured Programs — refreshes as
+                    // one unit behind one big loader, not three separate
+                    // small ones.
+                    FutureBuilder<List<Opportunity>>(
+                      future: _homeDataFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 100),
+                              child: Center(child: BrandedLoader()),
+                            ),
+                          );
+                        }
+
+                        if (snapshot.hasError) {
+                          return SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppSpacing.lg),
+                              child: ErrorRetryCard(
+                                message: snapshot.error.toString(),
+                                onRetry: () => setState(_fetchHomeData),
+                              ),
+                            ),
+                          );
+                        }
+
+                        final rawPrograms = snapshot.data ?? const [];
+                        final filteredPrograms = rawPrograms.where((program) {
+                          final matchesCategory =
+                              selectedCategory == null ||
+                              program.type == selectedCategory;
+                          final matchesSearch = program.name
+                              .toLowerCase()
+                              .contains(searchQuery.toLowerCase());
+                          return matchesCategory && matchesSearch;
+                        }).toList();
+
+                        return SliverMainAxisGroup(
+                          slivers: [
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.lg,
                                 ),
-                                child: _buildFeaturedProgramCard(program),
-                              );
-                            }, childCount: filteredPrograms.length),
-                          ),
-                        )
-                      : SliverToBoxAdapter(child: _buildEmptyState()),
-                  const SliverToBoxAdapter(child: SizedBox(height: 120)),
-                ],
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: AppSpacing.lg),
+                                    _buildContinueLearningHeader(),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    _buildContinueLearningSection(),
+                                    const SizedBox(height: AppSpacing.xl),
+                                    _buildAnnouncementsSection(),
+                                    const SizedBox(height: AppSpacing.xl),
+                                    _buildExploreProgramsHeader(),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    _buildCategoryFilterPills(),
+                                    const SizedBox(height: AppSpacing.lg),
+                                    _buildFeaturedProgramsHeader(),
+                                    const SizedBox(height: AppSpacing.sm),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (filteredPrograms.isEmpty)
+                              SliverToBoxAdapter(child: _buildEmptyState())
+                            else
+                              SliverPadding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.lg,
+                                ),
+                                sliver: SliverList(
+                                  delegate: SliverChildBuilderDelegate((
+                                    context,
+                                    index,
+                                  ) {
+                                    final program = filteredPrograms[index];
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: AppSpacing.md,
+                                      ),
+                                      child: AnimatedEntrance(
+                                        index: index,
+                                        child: _buildFeaturedProgramCard(
+                                          program,
+                                        ),
+                                      ),
+                                    );
+                                  }, childCount: filteredPrograms.length),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                  ],
+                ),
               ),
               AiChatButton(
                 showHint: _showChatHint,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/bottom_wave.dart';
+import '../../widgets/branded_loader.dart';
 import '../../widgets/password_field.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/primary_text_field.dart';
@@ -18,8 +19,9 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   // Class-level so validators don't rebuild RegExps on every keystroke.
-  static final RegExp _emailRegex =
-      RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$');
+  static final RegExp _emailRegex = RegExp(
+    r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$',
+  );
   static final RegExp _phoneRegex = RegExp(r'^\+?[0-9]{7,15}$');
 
   static const List<String> _countries = [
@@ -49,6 +51,11 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _agreedToTerms = false;
   bool _isLoading = false;
   bool _showCountryError = false;
+
+  // Shown full-screen once account creation succeeds, same branded
+  // interstitial as Login — bridges the gap before Home appears instead of
+  // an instant cut.
+  bool _isFetchingData = false;
 
   @override
   void dispose() {
@@ -131,18 +138,16 @@ class _SignupScreenState extends State<SignupScreen> {
                     'Select Country / Nationality',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
                 Expanded(
                   child: ListView.separated(
                     itemCount: _countries.length,
-                    separatorBuilder: (context, index) => const Divider(
-                      height: 1,
-                      color: AppColors.divider,
-                    ),
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1, color: AppColors.divider),
                     itemBuilder: (context, index) {
                       final country = _countries[index];
                       return ListTile(
@@ -199,11 +204,23 @@ class _SignupScreenState extends State<SignupScreen> {
       await Future<void>.delayed(const Duration(seconds: 2));
 
       if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _isFetchingData = true;
+      });
+
+      // Simulated fetch of the new learner's Home data — a fixed delay for
+      // now, matching the branded loading screen this app shows for every
+      // async fetch.
+      await Future<void>.delayed(const Duration(milliseconds: 2500));
+
+      if (!mounted) return;
 
       // Spec Section 4.2 / Navigation Map: successful sign-up lands on Home.
       Navigator.pushReplacementNamed(context, AppRouter.home);
     } catch (e) {
       if (!mounted) return;
+      setState(() => _isFetchingData = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Account creation failed. Please try again.'),
@@ -211,7 +228,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
       );
     } finally {
-      if (mounted) {
+      if (mounted && _isLoading) {
         setState(() => _isLoading = false);
       }
     }
@@ -239,60 +256,95 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      child: _isFetchingData
+          ? const Scaffold(
+              key: ValueKey('loading'),
+              backgroundColor: Colors.white,
+              body: Center(child: BrandedLoader(width: 110)),
+            )
+          : _buildForm(context),
+    );
+  }
+
+  Widget _buildForm(BuildContext context) {
     final viewInsets = MediaQuery.of(context).viewInsets;
 
     return Scaffold(
+      key: const ValueKey('form'),
       backgroundColor: AppColors.background,
+      // Keep the wave pinned to the physical screen bottom when the keyboard
+      // opens instead of letting the layout shrink and drag it upward.
       resizeToAvoidBottomInset: false,
-      bottomNavigationBar: const IgnorePointer(
-        child: BottomWave(color: AppColors.wave),
-      ),
-      body: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.only(bottom: viewInsets.bottom),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
-                child: _SignupBody(
-                  formKey: _formKey,
-                  firstNameController: _firstNameController,
-                  lastNameController: _lastNameController,
-                  emailController: _emailController,
-                  phoneController: _phoneController,
-                  passwordController: _passwordController,
-                  confirmPasswordController: _confirmPasswordController,
-                  selectedCountry: _selectedCountry,
-                  showCountryError: _showCountryError,
-                  agreedToTerms: _agreedToTerms,
-                  isLoading: _isLoading,
-                  onValidateRequired: _validateRequired,
-                  onValidateEmail: _validateEmail,
-                  onValidatePhone: _validatePhone,
-                  onValidatePassword: _validatePassword,
-                  onValidateConfirmPassword: _validateConfirmPassword,
-                  onPickCountry: _showCountryPicker,
-                  onToggleTerms: (value) {
-                    setState(
-                      () => _agreedToTerms = value ?? false,
-                    );
-                  },
-                  onGoogleTap: () => _showComingSoon('Google sign-up'),
-                  onAppleTap: () => _showComingSoon('Apple sign-up'),
-                  onTermsTap: () => _showComingSoon('Terms of Use'),
-                  onPrivacyTap: () => _showComingSoon('Privacy Policy'),
-                  onSubmit: _handleCreateAccount,
-                  onCancel: _navigateToLogin,
-                  onSignInTap: _navigateToLogin,
+      body: Stack(
+        children: [
+          // Content fills the whole screen and scrolls freely — unlike
+          // Login's short, vertically-centered form, this one is long
+          // enough that pixel-matching a reserved strip above the wave
+          // is fragile (the form's natural resting scroll position can
+          // land right at that boundary). Clearance instead comes from
+          // a generous fixed spacer at the very end of _SignupBody,
+          // well past the wave's own 90px, so there's unambiguous real
+          // whitespace between the last row and the wave no matter how
+          // the form scrolls.
+          Positioned.fill(
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: viewInsets.bottom),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 440),
+                      child: _SignupBody(
+                        formKey: _formKey,
+                        firstNameController: _firstNameController,
+                        lastNameController: _lastNameController,
+                        emailController: _emailController,
+                        phoneController: _phoneController,
+                        passwordController: _passwordController,
+                        confirmPasswordController: _confirmPasswordController,
+                        selectedCountry: _selectedCountry,
+                        showCountryError: _showCountryError,
+                        agreedToTerms: _agreedToTerms,
+                        isLoading: _isLoading,
+                        onValidateRequired: _validateRequired,
+                        onValidateEmail: _validateEmail,
+                        onValidatePhone: _validatePhone,
+                        onValidatePassword: _validatePassword,
+                        onValidateConfirmPassword: _validateConfirmPassword,
+                        onPickCountry: _showCountryPicker,
+                        onToggleTerms: (value) {
+                          setState(() => _agreedToTerms = value ?? false);
+                        },
+                        onGoogleTap: () => _showComingSoon('Google sign-up'),
+                        onAppleTap: () => _showComingSoon('Apple sign-up'),
+                        onTermsTap: () => _showComingSoon('Terms of Use'),
+                        onPrivacyTap: () => _showComingSoon('Privacy Policy'),
+                        onSubmit: _handleCreateAccount,
+                        onCancel: _navigateToLogin,
+                        onSignInTap: _navigateToLogin,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+          // Wave anchored to the physical screen bottom; ignored by
+          // hit-testing so it never intercepts taps on content that
+          // scrolls over it.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(child: BottomWave(color: AppColors.wave)),
+          ),
+        ],
       ),
     );
   }
@@ -420,9 +472,7 @@ class _SignupBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(
           'Join Excelerate and start your learning journey.',
-          style: textTheme.bodyMedium?.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.lg),
         SocialButton(
@@ -562,7 +612,10 @@ class _SignupBody extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.xl),
+        // Deliberately taller than BottomWave.height (90) — guarantees real,
+        // unambiguous whitespace between "Sign In" and the wave, regardless
+        // of exactly where this long form's natural scroll extent ends.
+        const SizedBox(height: BottomWave.height + 40),
       ],
     );
   }
@@ -581,9 +634,9 @@ class _OrDivider extends StatelessWidget {
           child: Text(
             'OR',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         const Expanded(child: Divider(color: AppColors.divider, thickness: 1)),
@@ -621,17 +674,12 @@ class _CountryField extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.textField),
               border: Border.all(
-                color: errorText != null
-                    ? AppColors.error
-                    : AppColors.divider,
+                color: errorText != null ? AppColors.error : AppColors.divider,
               ),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.public,
-                  color: AppColors.textSecondary,
-                ),
+                const Icon(Icons.public, color: AppColors.textSecondary),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
@@ -640,8 +688,9 @@ class _CountryField extends StatelessWidget {
                       color: isPlaceholder
                           ? AppColors.textSecondary
                           : AppColors.textPrimary,
-                      fontWeight:
-                          isPlaceholder ? FontWeight.normal : FontWeight.w600,
+                      fontWeight: isPlaceholder
+                          ? FontWeight.normal
+                          : FontWeight.w600,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -728,9 +777,9 @@ class _TermsRowState extends State<_TermsRow> {
         Expanded(
           child: RichText(
             text: TextSpan(
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
               children: [
                 const TextSpan(text: 'I agree to the '),
                 TextSpan(
@@ -767,8 +816,7 @@ class _PasswordStrengthMeter extends StatefulWidget {
   const _PasswordStrengthMeter({required this.controller});
 
   @override
-  State<_PasswordStrengthMeter> createState() =>
-      _PasswordStrengthMeterState();
+  State<_PasswordStrengthMeter> createState() => _PasswordStrengthMeterState();
 }
 
 class _PasswordStrengthMeterState extends State<_PasswordStrengthMeter> {
@@ -865,9 +913,9 @@ class _PasswordStrengthMeterState extends State<_PasswordStrengthMeter> {
             Text.rich(
               TextSpan(
                 text: 'Password strength: ',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
                 children: [
                   TextSpan(
                     text: _label,

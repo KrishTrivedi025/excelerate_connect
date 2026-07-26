@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
+import '../../services/opportunity_service.dart';
+import '../../widgets/branded_loader.dart';
+import '../../widgets/error_retry_card.dart';
 import '../../widgets/floating_action_bar.dart';
 import '../../widgets/program_card.dart' show ProgramThumbnail;
 
@@ -24,10 +27,22 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   late bool _isFavorited;
   bool _hasRegistered = false;
 
+  // Re-fetched fresh every time this screen opens, rather than trusting the
+  // (possibly stale) copy handed over via navigation — so an admin edit to
+  // this program shows up without needing the list re-fetched too.
+  late Future<Opportunity> _detailsFuture;
+
   @override
   void initState() {
     super.initState();
     _isFavorited = widget.opportunity.isFavorited;
+    _fetchDetails();
+  }
+
+  void _fetchDetails() {
+    _detailsFuture = OpportunityService.fetchOpportunityById(
+      widget.opportunity.id,
+    );
   }
 
   void _toggleFavorite() {
@@ -304,7 +319,37 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final opportunity = widget.opportunity;
+    return FutureBuilder<Opportunity>(
+      future: _detailsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(child: BrandedLoader(width: 110)),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: ErrorRetryCard(
+                  message: snapshot.error.toString(),
+                  onRetry: () => setState(_fetchDetails),
+                ),
+              ),
+            ),
+          );
+        }
+
+        return _buildContent(context, snapshot.data!);
+      },
+    );
+  }
+
+  Widget _buildContent(BuildContext context, Opportunity opportunity) {
     final cohort = opportunity.cohorts.isNotEmpty
         ? opportunity.cohorts.first
         : null;
