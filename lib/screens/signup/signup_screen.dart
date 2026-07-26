@@ -218,8 +218,18 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature — coming soon')),
+      SnackBar(
+        content: Text('$feature — coming soon'),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+        margin: const EdgeInsets.only(
+          bottom: BottomWave.height + AppSpacing.md,
+          left: AppSpacing.lg,
+          right: AppSpacing.lg,
+        ),
+      ),
     );
   }
 
@@ -229,96 +239,61 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final viewInsets = MediaQuery.of(context).viewInsets;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: [
-          // Isolating the keyboard-driven padding here means opening the
-          // keyboard rebuilds only this small wrapper, not the whole form.
-          // bottom: BottomWave.height reserves the wave's strip so the
-          // scrollable viewport can never render content behind it, at any
-          // scroll position — not just when scrolled all the way down.
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: BottomWave.height,
-            child: SafeArea(
-              bottom: false,
-              child: _KeyboardAvoidingPadding(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 440),
-                      child: _SignupBody(
-                        formKey: _formKey,
-                        firstNameController: _firstNameController,
-                        lastNameController: _lastNameController,
-                        emailController: _emailController,
-                        phoneController: _phoneController,
-                        passwordController: _passwordController,
-                        confirmPasswordController: _confirmPasswordController,
-                        selectedCountry: _selectedCountry,
-                        showCountryError: _showCountryError,
-                        agreedToTerms: _agreedToTerms,
-                        isLoading: _isLoading,
-                        onValidateRequired: _validateRequired,
-                        onValidateEmail: _validateEmail,
-                        onValidatePhone: _validatePhone,
-                        onValidatePassword: _validatePassword,
-                        onValidateConfirmPassword: _validateConfirmPassword,
-                        onPickCountry: _showCountryPicker,
-                        onToggleTerms: (value) {
-                          setState(
-                            () => _agreedToTerms = value ?? false,
-                          );
-                        },
-                        onGoogleTap: () => _showComingSoon('Google sign-up'),
-                        onAppleTap: () => _showComingSoon('Apple sign-up'),
-                        onTermsTap: () => _showComingSoon('Terms of Use'),
-                        onPrivacyTap: () => _showComingSoon('Privacy Policy'),
-                        onSubmit: _handleCreateAccount,
-                        onCancel: _navigateToLogin,
-                        onSignInTap: _navigateToLogin,
-                      ),
-                    ),
-                  ),
+      bottomNavigationBar: const IgnorePointer(
+        child: BottomWave(color: AppColors.wave),
+      ),
+      body: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: viewInsets.bottom),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: _SignupBody(
+                  formKey: _formKey,
+                  firstNameController: _firstNameController,
+                  lastNameController: _lastNameController,
+                  emailController: _emailController,
+                  phoneController: _phoneController,
+                  passwordController: _passwordController,
+                  confirmPasswordController: _confirmPasswordController,
+                  selectedCountry: _selectedCountry,
+                  showCountryError: _showCountryError,
+                  agreedToTerms: _agreedToTerms,
+                  isLoading: _isLoading,
+                  onValidateRequired: _validateRequired,
+                  onValidateEmail: _validateEmail,
+                  onValidatePhone: _validatePhone,
+                  onValidatePassword: _validatePassword,
+                  onValidateConfirmPassword: _validateConfirmPassword,
+                  onPickCountry: _showCountryPicker,
+                  onToggleTerms: (value) {
+                    setState(
+                      () => _agreedToTerms = value ?? false,
+                    );
+                  },
+                  onGoogleTap: () => _showComingSoon('Google sign-up'),
+                  onAppleTap: () => _showComingSoon('Apple sign-up'),
+                  onTermsTap: () => _showComingSoon('Terms of Use'),
+                  onPrivacyTap: () => _showComingSoon('Privacy Policy'),
+                  onSubmit: _handleCreateAccount,
+                  onCancel: _navigateToLogin,
+                  onSignInTap: _navigateToLogin,
                 ),
               ),
             ),
           ),
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: IgnorePointer(
-              child: BottomWave(color: AppColors.wave),
-            ),
-          ),
-        ],
+        ),
       ),
-    );
-  }
-}
-
-/// Isolates MediaQuery.viewInsets so only this thin wrapper rebuilds when the
-/// keyboard opens/closes — the SingleChildScrollView tree passed as [child]
-/// stays untouched.
-class _KeyboardAvoidingPadding extends StatelessWidget {
-  final Widget child;
-  const _KeyboardAvoidingPadding({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: child,
     );
   }
 }
@@ -387,49 +362,54 @@ class _SignupBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: AppSpacing.xl),
-        // Excelerate wordmark + tagline (no back arrow — Android system back
-        // and the "Sign In" link at the bottom still cover navigation).
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 44,
-              height: 44,
-              child: Center(
-                child: Text(
-                  'X',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
-                    color: AppColors.primary,
+        // Logo alone, large, left-aligned above "Create your account" —
+        // the wordmark is baked into the logo image itself, so no
+        // separate "Excelerate" text/tagline is needed next to it (no
+        // back arrow — Android system back and the "Sign In" link at the
+        // bottom still cover navigation). Align (not Center) is
+        // deliberate: the parent Column stretches its children by
+        // default, which would otherwise force this fixed-width box to
+        // full width and re-center it despite the explicit size.
+        Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            width: 240,
+            height: 72,
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.contain,
+              // The box's aspect ratio doesn't exactly match the image's
+              // real one, so BoxFit.contain leaves a bit of horizontal
+              // slack — without this, the image content centers within
+              // that slack instead of hugging the box's left edge, which
+              // is what made it look not-quite-left-aligned despite the
+              // outer Align above already being correct.
+              alignment: Alignment.centerLeft,
+              errorBuilder: (context, error, stackTrace) => Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'X',
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                      color: AppColors.primary,
+                    ),
                   ),
-                ),
+                  Text(
+                    'Excelerate',
+                    style: textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: AppSpacing.xs),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Excelerate',
-                  style: textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  'Learn • Grow • Excel',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           'Create your account',
           style: textTheme.headlineMedium?.copyWith(

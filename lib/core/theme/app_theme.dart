@@ -27,6 +27,12 @@ class AppColors {
 
   // Bottom wave
   static const Color wave = Color(0xFFFFE5D0);
+
+  /// Fill for every "Know More" button, shared between the Home screen's
+  /// AnnouncementCard and the Program Listing screen's ProgramCard so both
+  /// stay in sync. Matched to a user-supplied reference image — swap for an
+  /// exact hex if one turns up.
+  static const Color knowMoreAction = Color(0xFF4456E8);
 }
 
 /// Spacing scale — spec Section 3.3. Use these values only.

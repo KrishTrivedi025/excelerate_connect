@@ -74,6 +74,35 @@ excelerate_connect/
 - [x] App Proposal & Target Users defined
 - [x] Low-fidelity Wireframes (Login, Home, Program Listing, Program Details/Profile)
 - [x] GitHub Repository Setup
-- [ ] Core Screens built in Flutter (Week 2)
+- [x] Core Screens built in Flutter (Week 2)
 - [ ] Feature Integration (data, navigation logic) (Week 3)
 - [ ] Testing & Polish (Week 4)
+
+## Week 2 Deliverables
+
+- **Demo Video Walkthrough:** [Watch Video](https://drive.google.com/file/d/1ACBNF87p2x0uwsUSbDn7LqQr8Rq95C_w/view?usp=drivesdk)
+- **Implemented Screens:** Login, Sign-Up, Home, Program Listing, Program Details — all five fully built and wired together end-to-end.
+- **Screen Ownership:**
+  | Screen | Built by |
+  |---|---|
+  | Login & Sign-Up | Bhavyasree |
+  | Home | Hari |
+  | Program Listing | Suraj |
+  | Program Details | Victor |
+  | Navigation wiring, bug fixes & full UI/UX overhaul across every screen | Krrish (Team Lead) |
+- **Design Choices:** Consistent Excelerate branding (Poppins typography, `#FF8C42` primary orange), scalable modular architecture (screens / widgets / theme separated), seamless navigation via named routes, custom frosted-glass bottom nav bar with a curved silhouette, and a unified premium visual language applied across all five screens during the UI/UX pass.
+
+### Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="ScreenShot/login.jpg" width="220"/><br/><b>Login</b></td>
+    <td align="center"><img src="ScreenShot/signup.jpg" width="220"/><br/><b>Sign Up</b></td>
+    <td align="center"><img src="ScreenShot/home.jpg" width="220"/><br/><b>Home</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="ScreenShot/program%20list.jpg" width="220"/><br/><b>Program Listing</b></td>
+    <td align="center"><img src="ScreenShot/program%20details.jpg" width="220"/><br/><b>Program Details</b></td>
+    <td></td>
+  </tr>
+</table>
