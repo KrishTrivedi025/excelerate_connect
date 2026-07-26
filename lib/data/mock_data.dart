@@ -248,6 +248,7 @@ class Opportunity {
   final String name;
   final OpportunityType type;
   final String imageUrl;
+  final String imageType;
   final String shortDescription;
   final String? fullDescription;
   final List<String> learningOutcomes;
@@ -281,6 +282,7 @@ class Opportunity {
     required this.name,
     required this.type,
     required this.imageUrl,
+    this.imageType = 'flutter',
     required this.shortDescription,
     this.fullDescription,
     this.learningOutcomes = const [],
@@ -414,6 +416,7 @@ final List<Opportunity> mockOpportunities = [
     name: 'Mobile App Development with Flutter',
     type: OpportunityType.internship,
     imageUrl: 'assets/images/flutter_card.png',
+    imageType: 'flutter',
     shortDescription:
         'Build cross-platform mobile apps using Flutter and Dart. Learn widget trees, state management, and deploy your first app.',
     fullDescription:
@@ -607,9 +610,10 @@ final List<Opportunity> mockOpportunities = [
   // 3. Data Science with Python — Not Started
   Opportunity(
     id: 'opp_003',
-    name: 'Data Science with Python',
-    type: OpportunityType.course,
-    imageUrl: 'assets/images/datascience_card.png',
+    name: 'Data Science Job Simulation',
+    type: OpportunityType.jobSimulation,
+    imageUrl: 'assets/images/data_card.png',
+    imageType: 'datascience',
     shortDescription:
         'Master data analysis, visualization, and machine learning with Python. '
         'Clean data, create charts, and build predictive models.',
@@ -665,9 +669,10 @@ final List<Opportunity> mockOpportunities = [
   // 4. UI/UX Design Challenge — Not Started
   Opportunity(
     id: 'opp_004',
-    name: 'UI/UX Design Challenge 2026',
-    type: OpportunityType.competition,
+    name: 'UI/UX Design Masterclass',
+    type: OpportunityType.masterclass,
     imageUrl: 'assets/images/design_card.png',
+    imageType: 'design',
     shortDescription:
         'Redesign the Excelerate mobile experience and win prizes. '
         'Open to individuals and teams.',
@@ -727,9 +732,10 @@ final List<Opportunity> mockOpportunities = [
   // 5. Global Leadership Summit — Completed
   Opportunity(
     id: 'opp_005',
-    name: 'Global Leadership Summit 2026',
+    name: 'Excelerate Connect 2026',
     type: OpportunityType.event,
-    imageUrl: 'assets/images/leadership_card.png',
+    imageUrl: 'assets/images/event_card.png',
+    imageType: 'business',
     shortDescription:
         'A one-day virtual summit featuring talks from global leaders on '
         'innovation, strategy, and personal growth.',
