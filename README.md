@@ -75,7 +75,7 @@ excelerate_connect/
 - [x] Low-fidelity Wireframes (Login, Home, Program Listing, Program Details/Profile)
 - [x] GitHub Repository Setup
 - [x] Core Screens built in Flutter (Week 2)
-- [ ] Feature Integration (data, navigation logic) (Week 3)
+- [x] Feature Integration (data, navigation logic) (Week 3)
 - [ ] Testing & Polish (Week 4)
 
 ## Week 2 Deliverables
@@ -106,3 +106,21 @@ excelerate_connect/
     <td></td>
   </tr>
 </table>
+
+## Week 3 Deliverables
+
+Full writeup: [`Week3_Changelog_Documentation.pdf`](Week3_Changelog_Documentation.pdf).
+
+- **Demo Video Walkthrough:** [Watch Video](https://drive.google.com/file/d/1Hn-Naczv3e6_mjNyIDMgxRm3v864I4Io/view?usp=drivesdk)
+- **Task Ownership:**
+  | Area | Owner |
+  |---|---|
+  | OpportunityService (async layer) + ErrorRetryCard | Suraj |
+  | Program Listing — async data wiring | Victor |
+  | Feedback form | Bhavyasree |
+  | Registration form | Hari |
+  | Program Details async wiring, Sign-Up flow, bug fixes across every screen, documentation & README updates | Krrish (Team Lead) |
+- **API-connected screens:** Program Listing and Program Details both fetch through a mock async service (`OpportunityService`) instead of reading static data directly — real loading, error+retry, and pull-to-refresh states via `FutureBuilder`. Program Details re-fetches its own program fresh every time it opens, so an admin edit shows up without needing the list re-fetched too.
+- **New form:** Feedback screen rebuilt from scratch — mood slider, course-specific "what helped" chips, recommend pills, validated Name/Email, resizable comments, and a submit → loading → success-with-countdown flow. Registration's own form (name/DOB/email/source, all validated) follows the same pattern.
+- **Shared error handling:** `ErrorRetryCard` — one reusable error+retry widget instead of a one-off per screen.
+- **Branded loading indicator:** Excelerate's own animated mark replaces the generic spinner for every loading state — Login, Sign-Up, Program Listing, Program Details, and Home.
