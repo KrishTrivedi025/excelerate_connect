@@ -35,19 +35,9 @@ enum OpportunityType {
   engagement,
 }
 
-enum LocationType {
-  inPerson,
-  virtual,
-  remote,
-}
+enum LocationType { inPerson, virtual, remote }
 
-enum DurationType {
-  hours,
-  days,
-  weeks,
-  months,
-  years,
-}
+enum DurationType { hours, days, weeks, months, years }
 
 enum ApplicationStatus {
   applied,
@@ -64,12 +54,7 @@ enum ApplicationStatus {
 }
 
 /// NEW — used by Announcement model and Home Screen card color/icon logic
-enum AnnouncementType {
-  general,
-  urgent,
-  opportunity,
-  system,
-}
+enum AnnouncementType { general, urgent, opportunity, system }
 
 // =============================================================
 // MODELS — unchanged from original
@@ -386,21 +371,21 @@ class Opportunity {
   /// Flat map for ProgramCard widget — avoids passing full Opportunity object
   /// where only listing-level fields are needed.
   Map<String, dynamic> toCardData() => {
-        'id': id,
-        'imageUrl': imageUrl,
-        'name': name,
-        'categoryLabel': categoryLabel,
-        'durationLabel': durationLabel,
-        'scholarshipDisplay': scholarshipDisplay,
-        'sponsorName': sponsor?.name,
-        'skillNames': skills.map((s) => s.name).toList(),
-        'locationLabel': locationLabel,
-        'role': role,
-        'isFavorited': isFavorited,
-        'isEnrolled': isEnrolled,
-        'userStatus': userStatus,
-        'progressPercentage': progressPercentage,
-      };
+    'id': id,
+    'imageUrl': imageUrl,
+    'name': name,
+    'categoryLabel': categoryLabel,
+    'durationLabel': durationLabel,
+    'scholarshipDisplay': scholarshipDisplay,
+    'sponsorName': sponsor?.name,
+    'skillNames': skills.map((s) => s.name).toList(),
+    'locationLabel': locationLabel,
+    'role': role,
+    'isFavorited': isFavorited,
+    'isEnrolled': isEnrolled,
+    'userStatus': userStatus,
+    'progressPercentage': progressPercentage,
+  };
 }
 
 // =============================================================
@@ -466,14 +451,19 @@ final List<Opportunity> mockOpportunities = [
     fee: 0,
     currencyType: 'USD',
     scholarship: 500,
-    rewards: const ['Certificate of Completion', 'LinkedIn Badge', 'Scholarship Award'],
+    rewards: const [
+      'Certificate of Completion',
+      'LinkedIn Badge',
+      'Scholarship Award',
+    ],
     duration: 6,
     durationType: DurationType.weeks,
     modules: [
       Module(
         id: 'mod_flutter_1',
         title: 'Welcome & Onboarding',
-        description: 'Get familiar with the program structure and expectations.',
+        description:
+            'Get familiar with the program structure and expectations.',
         pages: [
           ModulePage(
             id: 'page_flutter_1_1',
@@ -495,7 +485,8 @@ final List<Opportunity> mockOpportunities = [
       Module(
         id: 'mod_flutter_2',
         title: 'Flutter Fundamentals',
-        description: 'Set up your environment and understand core Flutter concepts.',
+        description:
+            'Set up your environment and understand core Flutter concepts.',
         pages: [
           ModulePage(
             id: 'page_flutter_2_1',
@@ -782,8 +773,9 @@ final List<Opportunity> mockOpportunities = [
 /// Convenience filter — opportunities the user has enrolled in.
 /// Used by Home Screen "My Programs" section.
 /// opp_001 (in progress) + opp_002 (completed) + opp_005 (completed) = 3 items.
-final List<Opportunity> mockEnrolledOpportunities =
-    mockOpportunities.where((o) => o.isEnrolled).toList();
+final List<Opportunity> mockEnrolledOpportunities = mockOpportunities
+    .where((o) => o.isEnrolled)
+    .toList();
 
 // =============================================================
 // MOCK USER — Home Screen greeting & stats

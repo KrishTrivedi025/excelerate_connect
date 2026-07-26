@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
+import '../../services/opportunity_service.dart';
+import '../../widgets/error_retry_card.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/flexible_asset_image.dart';
 import '../../widgets/hero_banner.dart';
@@ -38,9 +40,20 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
   /// Selected category filter — null = "All"
   OpportunityType? _selectedCategory;
 
-  /// Computed getter: filters mockOpportunities by search + category
-  List<Opportunity> get _filteredOpportunities {
-    return mockOpportunities.where((opp) {
+  late Future<List<Opportunity>> _opportunitiesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOpportunities();
+  }
+
+  void _fetchOpportunities() {
+    _opportunitiesFuture = OpportunityService.fetchOpportunities();
+  }
+
+  List<Opportunity> _filterOpportunities(List<Opportunity> rawList) {
+    return rawList.where((opp) {
       final matchesSearch = opp.name.toLowerCase().contains(
         _searchQuery.toLowerCase(),
       );
@@ -50,13 +63,74 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
     }).toList();
   }
 
-  /// Simulates network refresh (mock data is static)
   Future<void> _handleRefresh() async {
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {});
+    setState(() {
+      _fetchOpportunities();
+    });
+    await _opportunitiesFuture.catchError((_) => <Opportunity>[]);
   }
 
   /// Category label for filter chip display
+  Future<void> _openProgramDetails(Opportunity program) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
+
+    try {
+      final fetchedProgram = await OpportunityService.fetchOpportunityById(
+        program.id,
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      Navigator.pushNamed(
+        context,
+        AppRouter.programDetails,
+        arguments: fetchedProgram,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: AppColors.background,
+        // Without this the sheet is capped to its default (non-scrollable)
+        // max height, and ErrorRetryCard's content — icon, title, message,
+        // full-width button, all with generous padding — genuinely
+        // overflows it on shorter screens.
+        isScrollControlled: true,
+        builder: (sheetContext) => ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(sheetContext).size.height * 0.7,
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: 24.0,
+                left: 24.0,
+                right: 24.0,
+                bottom: 24.0 + MediaQuery.of(context).padding.bottom,
+              ),
+              child: ErrorRetryCard(
+                message: e.toString(),
+                onRetry: () {
+                  Navigator.pop(sheetContext); // Close the error bottom sheet
+                  _openProgramDetails(program); // Retry the fetch immediately
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   String _getCategoryLabel(OpportunityType type) {
     switch (type) {
       case OpportunityType.internship:
@@ -80,8 +154,6 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredList = _filteredOpportunities;
-
     return PopScope(
       // This tab was reached via goToTab's pushReplacement, so it is the
       // only entry on the Navigator stack — there is nothing beneath it for
@@ -292,55 +364,90 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                       ),
                     ),
 
-                    // --- PROGRAM LIST or EMPTY STATE ---
-                    if (filteredList.isEmpty)
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: _buildEmptyState(context),
-                      )
-                    else
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: AppSpacing.xs,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final program = filteredList[index];
-                            return TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              duration: Duration(
-                                milliseconds: 380 + (index * 90).clamp(0, 450),
+                    // --- PROGRAM LIST or EMPTY STATE (NOW WITH ASYNC FUTUREBUILDER) ---
+                    FutureBuilder<List<Opportunity>>(
+                      future: _opportunitiesFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primary,
                               ),
-                              curve: Curves.easeOutCubic,
-                              builder: (context, value, child) {
-                                return Transform.translate(
-                                  offset: Offset(0, 24 * (1 - value)),
-                                  child: Opacity(opacity: value, child: child),
-                                );
-                              },
+                            ),
+                          );
+                        }
+
+                        if (snapshot.hasError) {
+                          return SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
                               child: Padding(
-                                padding: const EdgeInsets.only(
-                                  bottom: AppSpacing.md,
-                                ),
-                                child: ProgramCard(
-                                  program: program,
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      AppRouter.programDetails,
-                                      arguments: program,
-                                    );
-                                  },
+                                padding: const EdgeInsets.all(24.0),
+                                child: ErrorRetryCard(
+                                  message: snapshot.error.toString(),
+                                  onRetry: () =>
+                                      setState(() => _fetchOpportunities()),
                                 ),
                               ),
-                            );
-                          }, childCount: filteredList.length),
-                        ),
-                      ),
+                            ),
+                          );
+                        }
+
+                        final rawList = snapshot.data ?? [];
+                        final filteredList = _filterOpportunities(rawList);
+
+                        if (filteredList.isEmpty) {
+                          return SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: _buildEmptyState(context),
+                          );
+                        }
+
+                        return SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.xs,
+                          ),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final program = filteredList[index];
+                              return TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                duration: Duration(
+                                  milliseconds:
+                                      380 + (index * 90).clamp(0, 450),
+                                ),
+                                curve: Curves.easeOutCubic,
+                                builder: (context, value, child) {
+                                  return Transform.translate(
+                                    offset: Offset(0, 24 * (1 - value)),
+                                    child: Opacity(
+                                      opacity: value,
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: AppSpacing.md,
+                                  ),
+                                  child: ProgramCard(
+                                    program: program,
+                                    onTap: () => _openProgramDetails(program),
+                                  ),
+                                ),
+                              );
+                            }, childCount: filteredList.length),
+                          ),
+                        );
+                      },
+                    ),
                     const SliverToBoxAdapter(child: SizedBox(height: 120)),
                   ],
                 ),
