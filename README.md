@@ -75,7 +75,7 @@ excelerate_connect/
 - [x] Low-fidelity Wireframes (Login, Home, Program Listing, Program Details/Profile)
 - [x] GitHub Repository Setup
 - [x] Core Screens built in Flutter (Week 2)
-- [ ] Feature Integration (data, navigation logic) (Week 3) — in progress, see below
+- [ ] Feature Integration (data, navigation logic) (Week 3)
 - [ ] Testing & Polish (Week 4)
 
 ## Week 2 Deliverables
@@ -106,12 +106,3 @@ excelerate_connect/
     <td></td>
   </tr>
 </table>
-
-## Week 3 Deliverables
-
-Full writeup: [`Week3_Changelog_Documentation.pdf`](Week3_Changelog_Documentation.pdf).
-
-- **API-connected screens:** Program Listing now fetches through a mock async service (`OpportunityService`) instead of reading `mockOpportunities` directly — real loading, error+retry, and pull-to-refresh states via `FutureBuilder`. Program Details wiring into the same service is in progress.
-- **New form:** Feedback screen rebuilt from scratch — mood slider, course-specific "what helped" chips, recommend pills, validated Name/Email, resizable comments, and a submit → loading → success-with-countdown flow. Registration's existing form (name/DOB/email/source, all validated) follows the same pattern.
-- **Shared error handling:** `ErrorRetryCard` — one reusable error+retry widget instead of a one-off per screen.
-- **In progress:** a branded Excelerate loading indicator replacing the generic spinner across Login, Program Listing, and Program Details.
