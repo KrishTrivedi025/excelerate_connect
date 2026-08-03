@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_palette.dart';
 
 /// Component Library 6.4 — shared text field used on Login and Sign-Up.
 /// Styling (fill, border, radius, focus/error colors) comes from the global
@@ -50,7 +50,7 @@ class PrimaryTextField extends StatelessWidget {
         labelText: labelText,
         hintText: hintText,
         prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: AppColors.textSecondary)
+            ? Icon(prefixIcon, color: context.palette.textSecondary)
             : null,
         suffixIcon: suffixIcon,
       ),

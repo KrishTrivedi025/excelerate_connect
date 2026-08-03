@@ -28,5 +28,9 @@ doc/api/
 .flutter-plugins
 .flutter-plugins-dependencies
 
+# Gradle/Kotlin incremental compilation cache (android/gradle.properties
+# disables Kotlin incremental compilation, but Gradle still creates this dir)
+android/.kotlin/
+
 # Claude Code local-only settings (per-user permissions, not shared)
 .claude/settings.local.json

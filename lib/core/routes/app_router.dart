@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/mock_data.dart';
+import '../../screens/ai_chat/ai_chat_screen.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/login/login_screen.dart';
 import '../../screens/feedback/feedback_screen.dart';
@@ -18,6 +19,7 @@ class AppRouter {
   static const String programDetails = '/program-details';
   static const String registration = '/registration';
   static const String feedback = '/feedback';
+  static const String aiChat = '/ai-chat';
 
   /// Bottom-nav tab routes — these transition with a slide+fade instead of
   /// the default platform push, since switching tabs isn't a forward
@@ -28,9 +30,9 @@ class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final builder = _builderForRoute(settings);
     if (builder == null) return _notFound(settings.name);
-    return _tabRoutes.contains(settings.name)
-        ? _tabPage(builder, settings)
-        : _page(builder, settings);
+    if (_tabRoutes.contains(settings.name)) return _tabPage(builder, settings);
+    if (settings.name == aiChat) return _modalPage(builder, settings);
+    return _page(builder, settings);
   }
 
   /// Switches between bottom-nav tabs. Uses pushReplacement (tabs are peers,
@@ -67,6 +69,8 @@ class AppRouter {
         return (_) => FeedbackScreen(
           opportunity: settings.arguments as Opportunity,
         );
+      case aiChat:
+        return (_) => const AiChatScreen();
       default:
         return null;
     }
@@ -103,6 +107,34 @@ class AppRouter {
         );
       },
       transitionDuration: const Duration(milliseconds: 260),
+    );
+  }
+
+  /// Slide-up + fade — used for the AI chat screen so it reads as an
+  /// assistant panel opening over Home, not an ordinary forward push.
+  static PageRouteBuilder<void> _modalPage(
+    WidgetBuilder builder,
+    RouteSettings settings,
+  ) {
+    return PageRouteBuilder<void>(
+      settings: settings,
+      pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0, 0.06),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                ),
+            child: child,
+          ),
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 300),
     );
   }
 

@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import '../core/routes/app_router.dart';
+import '../core/theme/app_palette.dart';
 import '../core/theme/app_theme.dart';
 import '../data/mock_data.dart';
+import '../screens/program_details/program_details_screen.dart';
 
 const List<String> _kMonthAbbreviations = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
-
-/// Navy blue used only for the Apply Now button (border/text) on the
-/// Program Listing card — a deliberate, scoped exception to the app's
-/// orange theme, matching the reference design. Not used anywhere else.
-const Color _kListingActionColor = Color(0xFF1E3A5F);
 
 /// Component Library 6.1 — reusable program card.
 /// Vertical variant: Program Listing screen.
@@ -35,6 +32,7 @@ class ProgramCard extends StatelessWidget {
 
   Widget _buildVertical(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final palette = context.palette;
     final rewardEntries = _rewardEntries(program.rewards ?? const []);
     final visibleSkills = program.skills.take(2).toList();
     final extraSkillCount = program.skills.length - visibleSkills.length;
@@ -42,12 +40,12 @@ class ProgramCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
+        border: Border.all(color: palette.divider.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: palette.shadowSoft,
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -90,7 +88,7 @@ class ProgramCard extends StatelessWidget {
                             Text(
                               'Your Role: $role',
                               style: textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: palette.textSecondary,
                                 fontSize: 11.5,
                               ),
                               maxLines: 1,
@@ -103,7 +101,7 @@ class ProgramCard extends StatelessWidget {
                     const SizedBox(width: AppSpacing.xs),
                     Icon(
                       Icons.bookmark_border,
-                      color: AppColors.textSecondary.withValues(alpha: 0.5),
+                      color: palette.textSecondary.withValues(alpha: 0.5),
                       size: 20,
                     ),
                   ],
@@ -115,14 +113,14 @@ class ProgramCard extends StatelessWidget {
                     const SizedBox(width: 3),
                     Text(
                       '4.8 (120)', // Static mock rating matching the picture layout
-                      style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary),
+                      style: textTheme.labelSmall?.copyWith(color: palette.textSecondary),
                     ),
                     const SizedBox(width: AppSpacing.md),
-                    const Icon(Icons.schedule, size: 13, color: AppColors.textSecondary),
+                    Icon(Icons.schedule, size: 13, color: palette.textSecondary),
                     const SizedBox(width: 3),
                     Text(
                       program.durationLabel,
-                      style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary),
+                      style: textTheme.labelSmall?.copyWith(color: palette.textSecondary),
                     ),
                   ],
                 ),
@@ -153,13 +151,32 @@ class ProgramCard extends StatelessWidget {
                       child: SizedBox(
                         height: 36,
                         child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pushNamed(
-                            AppRouter.registration,
-                            arguments: program,
-                          ),
+                          onPressed: () async {
+                            // Registration pops with `true` once its
+                            // success panel auto-dismisses. This shortcut
+                            // skips Details on the way in, but should still
+                            // land there afterward — with Give Feedback
+                            // already showing — same end state as
+                            // registering from Details itself.
+                            final navigator = Navigator.of(context);
+                            final result = await navigator.pushNamed(
+                              AppRouter.registration,
+                              arguments: program,
+                            );
+                            if (result == true) {
+                              navigator.push(
+                                MaterialPageRoute(
+                                  builder: (_) => ProgramDetailsScreen(
+                                    opportunity: program,
+                                    initiallyRegistered: true,
+                                  ),
+                                ),
+                              );
+                            }
+                          },
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: _kListingActionColor,
-                            side: const BorderSide(color: _kListingActionColor),
+                            foregroundColor: palette.listingAction,
+                            side: BorderSide(color: palette.listingAction),
                             padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(AppRadius.button),
@@ -180,8 +197,8 @@ class ProgramCard extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: onTap,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.knowMoreAction,
-                            foregroundColor: Colors.white,
+                            backgroundColor: palette.knowMoreAction,
+                            foregroundColor: palette.onKnowMoreAction,
                             elevation: 0,
                             padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(
@@ -325,25 +342,26 @@ class _IconLabelChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: palette.background,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.divider.withValues(alpha: 0.7)),
+        border: Border.all(color: palette.divider.withValues(alpha: 0.7)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 12, color: AppColors.textSecondary),
+            Icon(icon, size: 12, color: palette.textSecondary),
             const SizedBox(width: 4),
           ],
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontSize: 10.5,
-                  color: AppColors.textPrimary,
+                  color: palette.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
           ),

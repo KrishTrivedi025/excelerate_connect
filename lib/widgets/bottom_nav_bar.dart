@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../core/routes/app_router.dart';
+import '../core/theme/app_palette.dart';
 import '../core/theme/app_theme.dart';
 import 'lottie_nav_icon.dart';
 
@@ -48,6 +49,7 @@ class BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final totalHeight = _archRise + _barBodyHeight + bottomInset;
+    final palette = context.palette;
 
     return Positioned(
       left: 0,
@@ -68,13 +70,19 @@ class BottomNavBar extends StatelessWidget {
                   filter: ImageFilter.blur(sigmaX: _blurSigma, sigmaY: _blurSigma),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.55),
-                      border: const Border(
-                        top: BorderSide(color: Colors.white, width: 1),
+                      // glassBase is opaque; the alpha here is the glass
+                      // effect's own — dark mode uses a lower alpha (0.6 vs
+                      // light's 0.55, tuned separately) since a dark tint
+                      // needs more coverage to read as glass over content.
+                      color: palette.glassBase.withValues(
+                        alpha: context.isDarkTheme ? 0.65 : 0.55,
+                      ),
+                      border: Border(
+                        top: BorderSide(color: palette.glassBorder, width: 1),
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
+                          color: palette.shadowStrong,
                           blurRadius: 24,
                           offset: const Offset(0, -4),
                         ),
@@ -330,7 +338,7 @@ class _NavItemState extends State<_NavItem> {
   @override
   Widget build(BuildContext context) {
     final color =
-        widget.isActive ? AppColors.primary : AppColors.textSecondary;
+        widget.isActive ? AppColors.primary : context.palette.navInactive;
     return GestureDetector(
       onTapDown: (_) => _setPressed(true),
       onTapUp: (_) => _setPressed(false),
@@ -398,6 +406,10 @@ class _CenterButtonState extends State<_CenterButton> {
 
   @override
   Widget build(BuildContext context) {
+    // Ring exists purely to separate the raised button from the nav bar
+    // behind it — must track the bar's own tone (navRing), not a fixed
+    // white, or it becomes a glaring halo once the bar is dark.
+    final navRing = context.palette.navRing;
     return GestureDetector(
       onTapDown: (_) => _setPressed(true),
       onTapUp: (_) => _setPressed(false),
@@ -412,7 +424,7 @@ class _CenterButtonState extends State<_CenterButton> {
           decoration: BoxDecoration(
             color: AppColors.primary,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
+            border: Border.all(color: navRing, width: 3),
             boxShadow: [
               BoxShadow(
                 color: AppColors.primary.withValues(alpha: 0.35),

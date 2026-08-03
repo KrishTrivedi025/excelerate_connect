@@ -20,6 +20,8 @@ class _DevApp extends StatelessWidget {
       title: 'Excelerate Connect — Login (dev)',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
       home: const LoginScreen(),
     );
   }

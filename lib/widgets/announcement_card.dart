@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_palette.dart';
 import '../core/theme/app_theme.dart';
 import '../data/mock_data.dart';
 
@@ -22,12 +23,13 @@ class AnnouncementCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final accent = _accentFor(item.type);
+    final palette = context.palette;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
+        border: Border.all(color: palette.divider.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.28),
@@ -70,7 +72,7 @@ class AnnouncementCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             item.body,
-                            style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                            style: textTheme.bodyMedium?.copyWith(color: palette.textSecondary),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -113,8 +115,8 @@ class AnnouncementCard extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: onTap,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.knowMoreAction,
-                            foregroundColor: Colors.white,
+                            backgroundColor: palette.knowMoreAction,
+                            foregroundColor: palette.onKnowMoreAction,
                             elevation: 6,
                             padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(

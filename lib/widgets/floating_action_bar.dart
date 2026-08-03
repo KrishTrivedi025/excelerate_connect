@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_palette.dart';
+
 /// Frosted-glass bottom action bar — full width, flush to the physical
 /// screen bottom (no gap beneath it), with only the top corners curved.
 /// Mirrors [HeroBanner]'s shape upside down (that one curves its bottom
@@ -39,6 +41,8 @@ class FloatingActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final palette = context.palette;
+    final isDark = context.isDarkTheme;
 
     return Positioned(
       left: 0,
@@ -59,11 +63,11 @@ class FloatingActionBar extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.fromLTRB(20, 16, 20, bottomInset + 16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.65),
-                  border: const Border(top: BorderSide(color: Colors.white)),
+                  color: palette.glassBase.withValues(alpha: isDark ? 0.75 : 0.65),
+                  border: Border(top: BorderSide(color: palette.glassBorder)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
+                      color: palette.shadowStrong,
                       blurRadius: 24,
                       offset: const Offset(0, -4),
                     ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_palette.dart';
 import '../core/theme/app_theme.dart';
 import 'flexible_asset_image.dart';
 
@@ -11,6 +12,11 @@ import 'flexible_asset_image.dart';
 /// plain icon so the app doesn't crash while that file is still a
 /// placeholder.
 class AiChatButton extends StatelessWidget {
+  // Single source of truth for the launcher's diameter — change this one
+  // number to resize the circle (e.g. 72 for smaller, 96 for bigger). The
+  // fallback icon inside scales proportionally with it.
+  static const double size = 68;
+
   final bool showHint;
   final VoidCallback onDismissHint;
   final VoidCallback onTap;
@@ -32,8 +38,8 @@ class AiChatButton extends StatelessWidget {
         children: [
           _HintBubble(visible: showHint, onTap: onDismissHint),
           Container(
-            width: 80,
-            height: 80,
+            width: size,
+            height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               // Moderate, soft ambient glow — restrained on purpose, not a
@@ -63,10 +69,10 @@ class AiChatButton extends StatelessWidget {
                 child: FlexibleAssetImage(
                   baseName: 'assets/images/chatbot_icon',
                   fit: BoxFit.cover,
-                  fallback: (context) => const Icon(
+                  fallback: (context) => Icon(
                     Icons.smart_toy_outlined,
                     color: AppColors.primary,
-                    size: 36,
+                    size: size * 0.45,
                   ),
                 ),
               ),
@@ -86,6 +92,10 @@ class _HintBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // inverseSurface/onInverseSurface, not textPrimary/white — textPrimary
+    // is a BACKGROUND here, and it flips to near-white in dark mode, which
+    // would turn this into a near-white bubble with unreadable white text.
+    final palette = context.palette;
     return AnimatedOpacity(
       opacity: visible ? 1 : 0,
       duration: const Duration(milliseconds: 250),
@@ -97,20 +107,20 @@ class _HintBubble extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.textPrimary,
+              color: palette.inverseSurface,
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
+                  color: palette.shadowStrong,
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: const Text(
+            child: Text(
               'Hi! 👋 Click me',
               style: TextStyle(
-                color: Colors.white,
+                color: palette.onInverseSurface,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
