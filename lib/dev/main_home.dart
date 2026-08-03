@@ -20,6 +20,8 @@ class _DevApp extends StatelessWidget {
       title: 'Excelerate Connect — Home (dev)',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
       home: const HomeScreen(),
     );
   }

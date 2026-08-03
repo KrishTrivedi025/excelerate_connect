@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/routes/app_router.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../services/opportunity_service.dart';
@@ -11,21 +12,34 @@ import '../../widgets/program_card.dart' show ProgramThumbnail;
 class ProgramDetailsScreen extends StatefulWidget {
   final Opportunity opportunity;
 
-  const ProgramDetailsScreen({super.key, required this.opportunity});
+  // Set when this screen is opened right after a successful registration
+  // made via the "Apply Now" shortcut on Program Listing (which registers
+  // without visiting Details first) — shows Give Feedback immediately
+  // instead of Register Now, matching what Details already does when the
+  // user registers by opening it directly.
+  final bool initiallyRegistered;
+
+  const ProgramDetailsScreen({
+    super.key,
+    required this.opportunity,
+    this.initiallyRegistered = false,
+  });
 
   @override
   State<ProgramDetailsScreen> createState() => _ProgramDetailsScreenState();
 }
 
 class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
-  // Sourced from AppColors instead of hardcoded so this screen follows the
-  // app's actual brand color, not just the original spec value.
+  // primary is brand-invariant and stays a plain const. textSecondary and
+  // divider flip between themes, so unlike before they can't be static
+  // const anymore — they're instance getters resolved off context instead
+  // (available in every method below since they're all on this State).
   static const _primary = AppColors.primary;
-  static const _textSecondary = AppColors.textSecondary;
-  static const _divider = AppColors.divider;
+  Color get _textSecondary => context.palette.textSecondary;
+  Color get _divider => context.palette.divider;
 
   late bool _isFavorited;
-  bool _hasRegistered = false;
+  late bool _hasRegistered;
 
   // Re-fetched fresh every time this screen opens, rather than trusting the
   // (possibly stale) copy handed over via navigation — so an admin edit to
@@ -36,6 +50,7 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   void initState() {
     super.initState();
     _isFavorited = widget.opportunity.isFavorited;
+    _hasRegistered = widget.initiallyRegistered;
     _fetchDetails();
   }
 
@@ -67,16 +82,17 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   }
 
   Widget _metaChip(String label) {
+    final palette = context.palette;
     return Chip(
       label: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
-          color: Colors.black,
+          color: palette.onInfoSurface,
         ),
       ),
-      backgroundColor: const Color(0xFFE3F2FD),
+      backgroundColor: palette.infoSurface,
       shape: const StadiumBorder(),
       side: BorderSide.none,
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -88,10 +104,10 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   Widget _sectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF212121),
+        color: context.palette.textPrimary,
       ),
     );
   }
@@ -173,7 +189,7 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 12, color: _textSecondary),
+                style: TextStyle(fontSize: 12, color: _textSecondary),
               ),
             ),
           ],
@@ -194,7 +210,7 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _divider),
       ),
@@ -227,8 +243,8 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
     return Chip(
       avatar: Icon(icon, size: 16, color: _primary),
       label: Text(displayLabel, style: const TextStyle(fontSize: 12)),
-      backgroundColor: Colors.white,
-      shape: StadiumBorder(side: const BorderSide(color: _divider)),
+      backgroundColor: context.palette.surfaceAlt,
+      shape: StadiumBorder(side: BorderSide(color: _divider)),
       visualDensity: VisualDensity.compact,
     );
   }
@@ -254,7 +270,11 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
       margin: const EdgeInsets.only(right: 10),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA),
+        // NOT palette.background — the scaffold below uses that same old
+        // #FAFAFA hex for a different purpose (the page itself). Chips need
+        // their own elevated tone or they'd vanish into the page in dark
+        // mode.
+        color: context.palette.surfaceAlt,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _divider),
       ),
@@ -276,39 +296,31 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   /// image on every program's details page, regardless of that program's
   /// own sponsor data. Confirmed with the user: this is not per-sponsor.
   Widget _sponsorLogo() {
-    // Breaks out of the page's 20px side padding so the logo spans the
-    // full device width edge-to-edge, sized to its real aspect ratio
-    // (~3:1) so it scales up cleanly instead of being squeezed into a
-    // short fixed-height box.
-    //
-    // Both Container's margin and Padding's padding assert their values
-    // are non-negative, so neither can be used for this "wider than my
-    // parent" effect. OverflowBox lets a child be laid out wider than its
-    // parent allows — but OverflowBox itself sizes to fill whatever
-    // constraints IT is given, and this section sits inside a vertical
-    // scroll view, which hands down an unbounded height. So OverflowBox
-    // needs an outer SizedBox to give its own reported size a finite
-    // height; the min/maxWidth below only override the child's width.
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final logoHeight = screenWidth * 724 / 2172;
-    return SizedBox(
-      height: logoHeight,
-      width: double.infinity,
-      child: OverflowBox(
-        minWidth: screenWidth,
-        maxWidth: screenWidth,
-        alignment: Alignment.center,
-        child: Image.asset(
-          'assets/images/slu_logo.png',
-          width: screenWidth,
-          height: logoHeight,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => const Center(
-            child: Text(
-              'Saint Louis University',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: _textSecondary,
+    // slu_logo.png has no alpha channel — opaque art on a near-white
+    // ground. Full-bleed edge-to-edge (the previous OverflowBox treatment)
+    // turns that into a stark white band across a dark page. Constraining
+    // it to a framed card instead — with a plate matching the asset's own
+    // ground — reads as a deliberate partner-logo lockup in both themes,
+    // and removes the seam entirely in dark mode.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          color: context.palette.logoPlate,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Image.asset(
+            'assets/images/slu_logo.png',
+            fit: BoxFit.contain,
+            height: 90,
+            errorBuilder: (context, error, stackTrace) => Center(
+              child: Text(
+                'Saint Louis University',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: _textSecondary,
+                ),
               ),
             ),
           ),
@@ -323,15 +335,15 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
       future: _detailsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: Colors.white,
-            body: Center(child: BrandedLoader(width: 110)),
+          return Scaffold(
+            backgroundColor: context.palette.background,
+            body: const Center(child: BrandedLoader(width: 110)),
           );
         }
 
         if (snapshot.hasError) {
           return Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: context.palette.background,
             body: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -357,9 +369,10 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
     final skills = opportunity.skills;
     final totalSkillPoints = skills.fold<int>(0, (sum, s) => sum + s.points);
     final roles = opportunity.rolesAndResponsibilities ?? const [];
+    final palette = context.palette;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: palette.background,
       body: SafeArea(
         bottom: false,
         child: Stack(
@@ -386,10 +399,10 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                       Expanded(
                         child: Text(
                           opportunity.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF212121),
+                            color: palette.textPrimary,
                           ),
                         ),
                       ),
@@ -423,10 +436,10 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                   const SizedBox(height: 12),
                   Text(
                     opportunity.fullDescription ?? opportunity.shortDescription,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       height: 1.5,
-                      color: Color(0xFF212121),
+                      color: palette.textPrimary,
                     ),
                   ),
                   if (roles.isNotEmpty) ...[
@@ -570,22 +583,31 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                   ],
 
                   // 10. Trust seal — one shared generic image, plus stats.
+                  // trust_seal.png has no alpha channel either, but the
+                  // artwork is already circular with a heavy ring — a
+                  // circular plate matching its ground disappears entirely
+                  // instead of showing a square seam.
                   Center(
-                    child: Image.asset(
-                      'assets/images/trust_seal.png',
+                    child: Container(
                       width: 140,
                       height: 140,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 140,
-                        height: 140,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _primary.withValues(alpha: 0.1),
-                        ),
-                        child: const Icon(
-                          Icons.verified_outlined,
-                          size: 56,
-                          color: _primary,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: palette.logoPlate,
+                      ),
+                      padding: const EdgeInsets.all(6),
+                      child: Image.asset(
+                        'assets/images/trust_seal.png',
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _primary.withValues(alpha: 0.1),
+                          ),
+                          child: const Icon(
+                            Icons.verified_outlined,
+                            size: 56,
+                            color: _primary,
+                          ),
                         ),
                       ),
                     ),
@@ -614,7 +636,7 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                   child: Icon(
                     _isFavorited ? Icons.bookmark : Icons.bookmark_border,
                     key: ValueKey(_isFavorited),
-                    color: _isFavorited ? _primary : const Color(0xFF212121),
+                    color: _isFavorited ? _primary : palette.textPrimary,
                   ),
                 ),
               ),
@@ -625,7 +647,7 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                     backgroundColor: _hasRegistered
                         ? AppColors.success
                         : _primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onPrimary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -662,7 +684,7 @@ class _ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: _textSecondary),
+          style: TextStyle(fontSize: 12, color: _textSecondary),
         ),
       ],
     );

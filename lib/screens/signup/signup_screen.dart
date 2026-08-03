@@ -1,7 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/routes/app_router.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/bottom_wave.dart';
 import '../../widgets/branded_loader.dart';
@@ -18,6 +22,14 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  // Frosted-glass wave (see the wave Positioned in _buildForm) — the wave
+  // renders translucent with a blurred backdrop instead of a flat solid
+  // shape. Tune the look here: _waveBlurSigma is the blur strength (higher
+  // = blurrier), _waveOpacity is how see-through the wave's own color is
+  // (lower = more glassy, higher = more solid).
+  static const double _waveBlurSigma = 22;
+  static const double _waveOpacity = 500;
+
   // Class-level so validators don't rebuild RegExps on every keystroke.
   static final RegExp _emailRegex = RegExp(
     r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$',
@@ -116,51 +128,62 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _showCountryPicker() async {
+    // Referenced directly (not context.palette) — this runs off
+    // State.context, which sits above (outside) the Theme override in
+    // build(), so it never sees it.
+    const palette = AppPalette.light;
     final selected = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: palette.surfaceAlt,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.hero),
         ),
       ),
+      // showModalBottomSheet mounts this content under the app's root
+      // Navigator, not under this screen's local Theme override — so it
+      // needs its own copy for ListTile/Divider to render light instead of
+      // following the current global (possibly dark) theme.
       builder: (context) {
-        return SafeArea(
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Text(
-                    'Select Country / Nationality',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+        return Theme(
+          data: AppTheme.light,
+          child: SafeArea(
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Text(
+                      'Select Country / Nationality',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: palette.textPrimary,
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: _countries.length,
-                    separatorBuilder: (context, index) =>
-                        const Divider(height: 1, color: AppColors.divider),
-                    itemBuilder: (context, index) {
-                      final country = _countries[index];
-                      return ListTile(
-                        title: Text(country),
-                        trailing: _selectedCountry == country
-                            ? const Icon(Icons.check, color: AppColors.primary)
-                            : null,
-                        onTap: () => Navigator.pop(context, country),
-                      );
-                    },
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: _countries.length,
+                      separatorBuilder: (context, index) =>
+                          Divider(height: 1, color: palette.divider),
+                      itemBuilder: (context, index) {
+                        final country = _countries[index];
+                        return ListTile(
+                          title: Text(country),
+                          trailing: _selectedCountry == country
+                              ? const Icon(Icons.check, color: AppColors.primary)
+                              : null,
+                          onTap: () => Navigator.pop(context, country),
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -223,7 +246,11 @@ class _SignupScreenState extends State<SignupScreen> {
       setState(() => _isFetchingData = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Account creation failed. Please try again.'),
+          // Explicit white text — see the matching note in login_screen.dart.
+          content: Text(
+            'Account creation failed. Please try again.',
+            style: TextStyle(color: Colors.white),
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -256,39 +283,54 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 400),
-      child: _isFetchingData
-          ? const Scaffold(
-              key: ValueKey('loading'),
-              backgroundColor: Colors.white,
-              body: Center(child: BrandedLoader(width: 110)),
-            )
-          : _buildForm(context),
+    // Sign-Up always renders in light mode, regardless of the app-wide
+    // theme toggle — auth screens are an intentional exemption (same
+    // treatment in login_screen.dart), the same way AiChatScreen is always
+    // dark. This Theme override is what makes every Material widget below
+    // (fields, buttons, checkbox) render light too, no matter
+    // ThemeController's current global mode.
+    return Theme(
+      data: AppTheme.light,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.dark,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 400),
+          child: _isFetchingData
+              ? Scaffold(
+                  key: const ValueKey('loading'),
+                  backgroundColor: AppPalette.light.background,
+                  body: const Center(child: BrandedLoader(width: 110)),
+                )
+              : _buildForm(context),
+        ),
+      ),
     );
   }
 
   Widget _buildForm(BuildContext context) {
     final viewInsets = MediaQuery.of(context).viewInsets;
+    // Referenced directly (not context.palette) — this method is still
+    // handed the pre-override context from build() above, since the Theme
+    // override wraps around its return value rather than sitting above it.
+    const palette = AppPalette.light;
 
     return Scaffold(
       key: const ValueKey('form'),
-      backgroundColor: AppColors.background,
+      backgroundColor: palette.background,
       // Keep the wave pinned to the physical screen bottom when the keyboard
       // opens instead of letting the layout shrink and drag it upward.
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          // Content fills the whole screen and scrolls freely — unlike
-          // Login's short, vertically-centered form, this one is long
-          // enough that pixel-matching a reserved strip above the wave
-          // is fragile (the form's natural resting scroll position can
-          // land right at that boundary). Clearance instead comes from
-          // a generous fixed spacer at the very end of _SignupBody,
-          // well past the wave's own 90px, so there's unambiguous real
-          // whitespace between the last row and the wave no matter how
-          // the form scrolls.
-          Positioned.fill(
+          // Reserve the wave's height out of the scrollable viewport itself
+          // (not just via a trailing spacer), so the viewport's own bottom
+          // edge never reaches the wave's paint zone — at ANY scroll
+          // position, including the initial resting one.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: viewInsets.bottom > 0 ? 0 : BottomWave.height,
             child: SafeArea(
               bottom: false,
               child: Padding(
@@ -335,14 +377,36 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ),
           ),
-          // Wave anchored to the physical screen bottom; ignored by
-          // hit-testing so it never intercepts taps on content that
-          // scrolls over it.
+          // Wave anchored to the physical screen bottom, rendered as
+          // frosted glass instead of a flat solid shape: BackdropFilter
+          // blurs whatever's directly behind this box (content never
+          // scrolls into this reserved strip, so there's nothing real to
+          // accidentally smear), and the wave itself is painted
+          // translucent over that blur — which also covers the plain
+          // background showing through the unpainted gaps inside the
+          // wave's own curve, not just the curve itself. Confined exactly
+          // to BottomWave's own height so it can never reach up into the
+          // scrollable form (that was the bug last time — it blurred the
+          // Create Account button). Ignored by hit-testing so it never
+          // intercepts taps on content that scrolls over it.
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: IgnorePointer(child: BottomWave(color: AppColors.wave)),
+            height: BottomWave.height,
+            child: IgnorePointer(
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: _waveBlurSigma,
+                    sigmaY: _waveBlurSigma,
+                  ),
+                  child: BottomWave(
+                    color: palette.wave.withValues(alpha: _waveOpacity),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -410,6 +474,7 @@ class _SignupBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final palette = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -424,39 +489,49 @@ class _SignupBody extends StatelessWidget {
         // full width and re-center it despite the explicit size.
         Align(
           alignment: Alignment.centerLeft,
-          child: SizedBox(
-            width: 240,
-            height: 72,
-            child: Image.asset(
-              'assets/images/logo.png',
-              fit: BoxFit.contain,
-              // The box's aspect ratio doesn't exactly match the image's
-              // real one, so BoxFit.contain leaves a bit of horizontal
-              // slack — without this, the image content centers within
-              // that slack instead of hugging the box's left edge, which
-              // is what made it look not-quite-left-aligned despite the
-              // outer Align above already being correct.
-              alignment: Alignment.centerLeft,
-              errorBuilder: (context, error, stackTrace) => Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'X',
-                    style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                      color: AppColors.primary,
+          // logo.png has no alpha channel — this plate is a no-op in light
+          // mode and frames it as a deliberate badge in dark mode instead
+          // of showing a stark white rectangle (see top_header_bar.dart).
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: palette.logoPlate,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: SizedBox(
+              width: 200,
+              height: 70,
+              child: Image.asset(
+                'assets/images/logo.png',
+                fit: BoxFit.contain,
+                // The box's aspect ratio doesn't exactly match the image's
+                // real one, so BoxFit.contain leaves a bit of horizontal
+                // slack — without this, the image content centers within
+                // that slack instead of hugging the box's left edge, which
+                // is what made it look not-quite-left-aligned despite the
+                // outer Align above already being correct.
+                alignment: Alignment.centerLeft,
+                errorBuilder: (context, error, stackTrace) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'X',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'Excelerate',
-                    style: textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                    Text(
+                      'Excelerate',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: palette.textPrimary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -466,13 +541,13 @@ class _SignupBody extends StatelessWidget {
           'Create your account',
           style: textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: palette.textPrimary,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
           'Join Excelerate and start your learning journey.',
-          style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+          style: textTheme.bodyMedium?.copyWith(color: palette.textSecondary),
         ),
         const SizedBox(height: AppSpacing.lg),
         SocialButton(
@@ -576,15 +651,15 @@ class _SignupBody extends StatelessWidget {
           onPressed: isLoading ? null : onCancel,
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(52),
-            side: const BorderSide(color: AppColors.divider),
+            side: BorderSide(color: palette.divider),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.button),
             ),
           ),
-          child: const Text(
+          child: Text(
             'Cancel',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: palette.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -597,7 +672,7 @@ class _SignupBody extends StatelessWidget {
             Text(
               'Already have an account? ',
               style: textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: palette.textSecondary,
               ),
             ),
             GestureDetector(
@@ -615,7 +690,7 @@ class _SignupBody extends StatelessWidget {
         // Deliberately taller than BottomWave.height (90) — guarantees real,
         // unambiguous whitespace between "Sign In" and the wave, regardless
         // of exactly where this long form's natural scroll extent ends.
-        const SizedBox(height: BottomWave.height + 40),
+        const SizedBox(height: BottomWave.height),
       ],
     );
   }
@@ -626,20 +701,21 @@ class _OrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Row(
       children: [
-        const Expanded(child: Divider(color: AppColors.divider, thickness: 1)),
+        Expanded(child: Divider(color: palette.divider, thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           child: Text(
             'OR',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: palette.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
         ),
-        const Expanded(child: Divider(color: AppColors.divider, thickness: 1)),
+        Expanded(child: Divider(color: palette.divider, thickness: 1)),
       ],
     );
   }
@@ -662,6 +738,7 @@ class _CountryField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -674,20 +751,20 @@ class _CountryField extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.textField),
               border: Border.all(
-                color: errorText != null ? AppColors.error : AppColors.divider,
+                color: errorText != null ? palette.errorText : palette.divider,
               ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.public, color: AppColors.textSecondary),
+                Icon(Icons.public, color: palette.textSecondary),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     label,
                     style: TextStyle(
                       color: isPlaceholder
-                          ? AppColors.textSecondary
-                          : AppColors.textPrimary,
+                          ? palette.textSecondary
+                          : palette.textPrimary,
                       fontWeight: isPlaceholder
                           ? FontWeight.normal
                           : FontWeight.w600,
@@ -695,9 +772,9 @@ class _CountryField extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.keyboard_arrow_down,
-                  color: AppColors.textSecondary,
+                  color: palette.textSecondary,
                 ),
               ],
             ),
@@ -708,7 +785,7 @@ class _CountryField extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6, left: 12),
             child: Text(
               errorText!,
-              style: const TextStyle(color: AppColors.error, fontSize: 12),
+              style: TextStyle(color: palette.errorText, fontSize: 12),
             ),
           ),
       ],
@@ -779,7 +856,7 @@ class _TermsRowState extends State<_TermsRow> {
             text: TextSpan(
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              ).textTheme.bodyMedium?.copyWith(color: context.palette.textSecondary),
               children: [
                 const TextSpan(text: 'I agree to the '),
                 TextSpan(
@@ -885,6 +962,7 @@ class _PasswordStrengthMeterState extends State<_PasswordStrengthMeter> {
     const segmentCount = 5;
     final filledSegments = (_strength * segmentCount).round();
     final hasText = widget.controller.text.isNotEmpty;
+    final palette = context.palette;
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -901,7 +979,7 @@ class _PasswordStrengthMeterState extends State<_PasswordStrengthMeter> {
                   ),
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isFilled ? _color : AppColors.divider,
+                    color: isFilled ? _color : palette.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -915,7 +993,7 @@ class _PasswordStrengthMeterState extends State<_PasswordStrengthMeter> {
                 text: 'Password strength: ',
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                ).textTheme.bodySmall?.copyWith(color: palette.textSecondary),
                 children: [
                   TextSpan(
                     text: _label,

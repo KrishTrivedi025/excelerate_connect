@@ -15,17 +15,19 @@
 
 ## Overview
 
-Excelerate Connect brings Excelerate's virtual internship and learning-program ecosystem into a single, easy-to-use mobile experience. Learners can discover, apply for, and track global internships, courses, and competitions, while administrators get a lightweight way to publish and manage program content and monitor learner engagement.
+Excelerate Connect is a platform that facilitates program exploration for learners and simplifies announcement sharing and feedback collection for admins. Learners can discover, apply for, and track global internships, courses, and competitions from a single mobile app; admins get a lightweight way to publish and manage program content and monitor learner engagement.
 
-## Project Vision
+## Key Features
 
-Excelerate Connect aims to make discovering and completing virtual internships and learning programs as simple as browsing a marketplace — helping learners build real career experience and giving administrators an efficient way to publish and manage opportunities, all from a mobile device.
+- **Program discovery** — a scrollable, filterable catalog (Program Listing) and a rich Program Details view for every internship, course, and competition, both backed by an async data layer with real loading, error+retry, and pull-to-refresh states.
+- **Full learner flow** — Login, Sign-Up, a personalized Home dashboard, Program Details, Registration, and a Feedback form, all wired together with consistent branding and validation.
+- **App-wide Light/Dark theme** — a single toggle in the Home header (between the notification bell and the profile avatar) switches the entire app's colors with an animated cross-fade. The choice is remembered across launches and follows the device's own theme the first time the app runs. Login and Sign-Up are the one deliberate exception — they always render in light mode, matching how most apps treat their auth screens.
+- **AI Guide chatbot** — a full-screen assistant (accessible from every screen) that answers learner questions about the app's programs from a local, offline knowledge base — deep coverage of the Flutter Mobile App Development internship (this project itself) and lighter coverage of Excelerate's other programs. No network call and no ML model are involved yet; see **Roadmap** below for where this is headed.
+- **Branded loading & error states** — a custom animated loading mark and a single reusable `ErrorRetryCard` replace generic spinners and one-off error UIs across every screen.
 
-## Objectives
+### Roadmap: AI Guide → a real LLM assistant
 
-- Build a cross-platform (iOS/Android) Flutter application for the Excelerate learner and admin experience
-- Deliver a clean, low-friction application flow from discovery to enrollment
-- Establish a modular codebase (screens / widgets / models / services) that scales cleanly as features are added
+The AI Guide is intentionally built as a simple, fast, offline keyword-matched chatbot today — no ML, no network call — so it never has a blank answer and works with zero setup. The planned next step is to grow it into a genuine LLM-backed assistant wired to a RAG (retrieval-augmented generation) pipeline over the *entire* LMS course library, not just this internship. The goal: a learner who's lost on their track — say, unsure what Week 3 of their program actually requires, or who missed a sync meeting — can just ask the AI Guide and get a real, personalized answer, drawn from the actual course content, with concrete next steps for their own plan. It should also be able to answer general "what is Excelerate / what do they offer / what's new" questions well enough to make a prospective learner want to join. This is a deliberate next-phase goal, not yet implemented.
 
 ## Navigation Flow
 
@@ -38,19 +40,23 @@ flowchart LR
     E --> F[Confirmation]
     F --> G[Profile / Dashboard]
     G --> H[Feedback Form]
+    B --> I[AI Guide Chat]
 
-    B -.Admin Role.-> I[Admin Dashboard]
-    I --> J[Manage Programs]
-    I --> K[Review Feedback]
+    B -.Admin Role.-> J[Admin Dashboard]
+    J --> K[Manage Programs]
+    J --> L[Review Feedback]
 ```
 
-A persistent bottom navigation bar (**Home · Programs · Alerts · Profile**) is available on every screen once a learner is logged in — no dead ends in the flow.
+A persistent bottom navigation bar (**Home · Programs · Alerts · Profile**) and a floating AI Guide entry point are available on every screen once a learner is logged in — no dead ends in the flow.
 
 ## Tech Stack
 
 | Layer | Tool |
 |---|---|
 | Framework | Flutter & Dart |
+| Fonts | Google Fonts (Poppins) |
+| Local persistence | `shared_preferences` (theme preference) |
+| Images / media | `cached_network_image`, `flutter_svg`, `lottie` |
 | Design | Figma (wireframes & UI) |
 | Version Control | Git & GitHub |
 
@@ -59,40 +65,21 @@ A persistent bottom navigation bar (**Home · Programs · Alerts · Profile**) i
 ```
 excelerate_connect/
 ├── lib/
-│   ├── screens/       # UI screens (Login, Home, Program Listing, etc.)
-│   ├── widgets/        # Reusable UI components
-│   ├── models/         # Data models
-│   └── services/       # API / data handling
-├── android/             # Android platform files
-├── ios/                 # iOS platform files
-├── pubspec.yaml         # Dependencies & project metadata
+│   ├── screens/         # Login, Sign-Up, Home, Program Listing/Details,
+│   │                     Feedback, Registration, AI Chat
+│   ├── widgets/          # Reusable UI components (nav bar, cards, theme toggle, ...)
+│   ├── core/
+│   │   ├── theme/        # AppTheme, AppPalette (light/dark tokens), ThemeController
+│   │   └── routes/        # Named-route navigation
+│   ├── data/              # Mock data & the AI Guide's local knowledge base
+│   └── services/          # Async data + chat services
+├── android/              # Android platform files
+├── ios/                   # iOS platform files
+├── pubspec.yaml           # Dependencies & project metadata
 └── README.md
 ```
 
-## Current Progress
-
-- [x] App Proposal & Target Users defined
-- [x] Low-fidelity Wireframes (Login, Home, Program Listing, Program Details/Profile)
-- [x] GitHub Repository Setup
-- [x] Core Screens built in Flutter (Week 2)
-- [x] Feature Integration (data, navigation logic) (Week 3)
-- [ ] Testing & Polish (Week 4)
-
-## Week 2 Deliverables
-
-- **Demo Video Walkthrough:** [Watch Video](https://drive.google.com/file/d/1ACBNF87p2x0uwsUSbDn7LqQr8Rq95C_w/view?usp=drivesdk)
-- **Implemented Screens:** Login, Sign-Up, Home, Program Listing, Program Details — all five fully built and wired together end-to-end.
-- **Screen Ownership:**
-  | Screen | Built by |
-  |---|---|
-  | Login & Sign-Up | Bhavyasree |
-  | Home | Hari |
-  | Program Listing | Suraj |
-  | Program Details | Victor |
-  | Navigation wiring, bug fixes & full UI/UX overhaul across every screen | Krrish (Team Lead) |
-- **Design Choices:** Consistent Excelerate branding (Poppins typography, `#FF8C42` primary orange), scalable modular architecture (screens / widgets / theme separated), seamless navigation via named routes, custom frosted-glass bottom nav bar with a curved silhouette, and a unified premium visual language applied across all five screens during the UI/UX pass.
-
-### Screenshots
+## Screenshots
 
 <table>
   <tr>
@@ -107,20 +94,36 @@ excelerate_connect/
   </tr>
 </table>
 
-## Week 3 Deliverables
+## Getting Started
 
-Full writeup: [`Week3_Changelog_Documentation.pdf`](Week3_Changelog_Documentation.pdf).
+**Prerequisites:** Flutter SDK (3.x+) and Dart, a configured Android/iOS toolchain (Android Studio and/or Xcode), and a connected device or emulator.
 
-- **Demo Video Walkthrough:** [Watch Video](https://drive.google.com/file/d/1Hn-Naczv3e6_mjNyIDMgxRm3v864I4Io/view?usp=drivesdk)
-- **Task Ownership:**
-  | Area | Owner |
-  |---|---|
-  | OpportunityService (async layer) + ErrorRetryCard | Suraj |
-  | Program Listing — async data wiring | Victor |
-  | Feedback form | Bhavyasree |
-  | Registration form | Hari |
-  | Program Details async wiring, Sign-Up flow, bug fixes across every screen, documentation & README updates | Krrish (Team Lead) |
-- **API-connected screens:** Program Listing and Program Details both fetch through a mock async service (`OpportunityService`) instead of reading static data directly — real loading, error+retry, and pull-to-refresh states via `FutureBuilder`. Program Details re-fetches its own program fresh every time it opens, so an admin edit shows up without needing the list re-fetched too.
-- **New form:** Feedback screen rebuilt from scratch — mood slider, course-specific "what helped" chips, recommend pills, validated Name/Email, resizable comments, and a submit → loading → success-with-countdown flow. Registration's own form (name/DOB/email/source, all validated) follows the same pattern.
-- **Shared error handling:** `ErrorRetryCard` — one reusable error+retry widget instead of a one-off per screen.
-- **Branded loading indicator:** Excelerate's own animated mark replaces the generic spinner for every loading state — Login, Sign-Up, Program Listing, Program Details, and Home.
+```bash
+git clone https://github.com/KrishTrivedi025/excelerate_connect.git
+cd excelerate_connect
+flutter pub get
+flutter run
+```
+
+## Demo Video
+
+_Link to be added once recorded._
+
+## Contributors
+
+| Area | Contributor |
+|---|---|
+| Login & Sign-Up, Feedback form | Bhavyasree |
+| Home screen, Registration form | Hari |
+| Async data layer (`OpportunityService`), `ErrorRetryCard` | Suraj |
+| Program Listing & Details, async wiring | Victor |
+| Team Lead — navigation, full UI/UX pass, app-wide Light/Dark theme system, AI Guide chatbot, documentation | Krrish |
+
+## Changelog
+
+- Core screens (Login, Sign-Up, Home, Program Listing, Program Details) built and wired end-to-end with consistent Excelerate branding.
+- Async data layer added to Program Listing and Program Details — real loading, error+retry, and pull-to-refresh instead of static data.
+- Feedback and Registration forms built with full validation and a branded submit → success flow.
+- Branded loading indicator rolled out across every loading state.
+- App-wide Light/Dark theme system added — a `ThemeExtension`-based palette, a header toggle with an animated icon morph, and persistence via `shared_preferences`.
+- AI Guide chatbot added — a full-screen assistant with a local knowledge base, reachable from every screen.

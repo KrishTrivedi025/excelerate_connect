@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/routes/app_router.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/bottom_wave.dart';
 import '../../widgets/branded_loader.dart';
@@ -90,7 +92,14 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isFetchingData = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Login failed. Please try again.'),
+          // Explicit white text — the theme's snackBarTheme.contentTextStyle
+          // is tuned for the default inverseSurface background (dark text on
+          // a light chip in dark mode), which would be unreadable on this
+          // red fill.
+          content: Text(
+            'Login failed. Please try again.',
+            style: TextStyle(color: Colors.white),
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -123,19 +132,39 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Login always renders in light mode, regardless of the app-wide theme
+    // toggle — auth screens are an intentional exemption (same treatment
+    // in signup_screen.dart), the same way AiChatScreen is always dark.
+    // This Theme override is what makes every Material widget below
+    // (fields, buttons) render light too, no matter ThemeController's
+    // current global mode.
+    return Theme(
+      data: AppTheme.light,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.dark,
+        child: _buildContent(context),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final viewInsets = MediaQuery.of(context).viewInsets;
+    // Referenced directly (not context.palette) — this method is still
+    // handed the pre-override context from build() above, since the Theme
+    // override wraps around its return value rather than sitting above it.
+    const palette = AppPalette.light;
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 400),
       child: _isFetchingData
-          ? const Scaffold(
-              key: ValueKey('loading'),
-              backgroundColor: Colors.white,
+          ? Scaffold(
+              key: const ValueKey('loading'),
+              backgroundColor: palette.background,
               body: Center(child: BrandedLoader(width: 110)),
             )
           : Scaffold(
               key: const ValueKey('form'),
-              backgroundColor: AppColors.background,
+              backgroundColor: palette.background,
               // Keep the wave pinned to the physical screen bottom when the keyboard
               // opens instead of letting the layout shrink and drag it upward.
               resizeToAvoidBottomInset: false,
@@ -192,28 +221,44 @@ class _LoginScreenState extends State<LoginScreen> {
                                       // aspect ratio (not a square) so it renders at a
                                       // legible size instead of BoxFit.contain
                                       // shrinking it to fit a square box.
-                                      child: SizedBox(
-                                        width: 220,
-                                        height: 66,
-                                        child: Image.asset(
-                                          'assets/images/logo.png',
-                                          fit: BoxFit.contain,
-                                          errorBuilder:
-                                              (
-                                                context,
-                                                error,
-                                                stackTrace,
-                                              ) => const Center(
-                                                child: Text(
-                                                  'X',
-                                                  style: TextStyle(
-                                                    fontSize: 48,
-                                                    fontWeight: FontWeight.w900,
-                                                    height: 1,
-                                                    color: AppColors.primary,
+                                      //
+                                      // logo.png has no alpha channel — opaque art on
+                                      // a near-white #F7F7F5 plate. This Container is
+                                      // a no-op in light mode (transparent) and frames
+                                      // it as a deliberate badge in dark mode instead
+                                      // of showing a stark white rectangle.
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: palette.logoPlate,
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        child: SizedBox(
+                                          width: 220,
+                                          height: 66,
+                                          child: Image.asset(
+                                            'assets/images/logo.png',
+                                            fit: BoxFit.contain,
+                                            errorBuilder:
+                                                (
+                                                  context,
+                                                  error,
+                                                  stackTrace,
+                                                ) => const Center(
+                                                  child: Text(
+                                                    'X',
+                                                    style: TextStyle(
+                                                      fontSize: 48,
+                                                      fontWeight: FontWeight.w900,
+                                                      height: 1,
+                                                      color: AppColors.primary,
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -226,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           .headlineSmall
                                           ?.copyWith(
                                             fontWeight: FontWeight.w800,
-                                            color: AppColors.textPrimary,
+                                            color: palette.textPrimary,
                                           ),
                                     ),
                                     const SizedBox(height: AppSpacing.xs),
@@ -237,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           .textTheme
                                           .bodyMedium
                                           ?.copyWith(
-                                            color: AppColors.textSecondary,
+                                            color: palette.textSecondary,
                                           ),
                                     ),
                                     const SizedBox(height: AppSpacing.xl),
@@ -249,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           .headlineMedium
                                           ?.copyWith(
                                             fontWeight: FontWeight.bold,
-                                            color: AppColors.textPrimary,
+                                            color: palette.textPrimary,
                                           ),
                                     ),
                                     const SizedBox(height: AppSpacing.xs),
@@ -260,7 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           .textTheme
                                           .bodyMedium
                                           ?.copyWith(
-                                            color: AppColors.textSecondary,
+                                            color: palette.textSecondary,
                                           ),
                                     ),
                                     const SizedBox(height: AppSpacing.xl),
@@ -302,6 +347,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                               style: TextButton.styleFrom(
                                                 foregroundColor:
                                                     AppColors.primary,
+                                                overlayColor:
+                                                    Colors.transparent,
                                                 padding:
                                                     const EdgeInsets.symmetric(
                                                       vertical: AppSpacing.xs,
@@ -360,7 +407,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               .textTheme
                                               .bodyMedium
                                               ?.copyWith(
-                                                color: AppColors.textSecondary,
+                                                color: palette.textSecondary,
                                               ),
                                         ),
                                         GestureDetector(
@@ -405,7 +452,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     right: 0,
                     bottom: 0,
                     child: IgnorePointer(
-                      child: BottomWave(color: AppColors.wave),
+                      child: BottomWave(color: palette.wave),
                     ),
                   ),
                 ],
@@ -420,20 +467,21 @@ class _OrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Row(
       children: [
-        Expanded(child: Divider(color: AppColors.divider, thickness: 1)),
+        Expanded(child: Divider(color: palette.divider, thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           child: Text(
             'OR',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: palette.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
         ),
-        Expanded(child: Divider(color: AppColors.divider, thickness: 1)),
+        Expanded(child: Divider(color: palette.divider, thickness: 1)),
       ],
     );
   }

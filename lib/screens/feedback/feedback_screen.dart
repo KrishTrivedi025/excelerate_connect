@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../core/routes/app_router.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../widgets/floating_action_bar.dart';
@@ -133,18 +134,19 @@ class _FeedbackScreenState extends State<FeedbackScreen>
   }
 
   InputDecoration _fieldDecoration(String hint) {
+    final palette = context.palette;
     return InputDecoration(
       hintText: hint,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: palette.fieldFill,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.textField),
-        borderSide: const BorderSide(color: AppColors.divider),
+        borderSide: BorderSide(color: palette.divider),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.textField),
-        borderSide: const BorderSide(color: AppColors.divider),
+        borderSide: BorderSide(color: palette.divider),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.textField),
@@ -152,13 +154,14 @@ class _FeedbackScreenState extends State<FeedbackScreen>
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.textField),
-        borderSide: const BorderSide(color: AppColors.error),
+        borderSide: BorderSide(color: palette.errorText),
       ),
     );
   }
 
   Widget _buildChip(String label) {
     final isSelected = _selectedChips.contains(label);
+    final palette = context.palette;
     return GestureDetector(
       onTap: () => setState(() {
         if (isSelected) {
@@ -170,12 +173,10 @@ class _FeedbackScreenState extends State<FeedbackScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.wave.withValues(alpha: 0.4)
-              : Colors.white,
+          color: isSelected ? palette.selectedSurface : palette.surfaceAlt,
           borderRadius: BorderRadius.circular(AppRadius.textField),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.divider,
+            color: isSelected ? AppColors.primary : palette.divider,
           ),
         ),
         child: Text(
@@ -183,7 +184,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
           style: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: AppColors.textPrimary,
+            color: palette.textPrimary,
           ),
         ),
       ),
@@ -192,6 +193,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
 
   Widget _buildRecommendPill(String label) {
     final isSelected = _selectedRecommend == label;
+    final palette = context.palette;
     return Expanded(
       child: Padding(
         padding: EdgeInsets.only(
@@ -203,12 +205,10 @@ class _FeedbackScreenState extends State<FeedbackScreen>
             height: 46,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColors.wave.withValues(alpha: 0.4)
-                  : Colors.white,
+              color: isSelected ? palette.selectedSurface : palette.surfaceAlt,
               borderRadius: BorderRadius.circular(AppRadius.textField),
               border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.divider,
+                color: isSelected ? AppColors.primary : palette.divider,
               ),
             ),
             child: Text(
@@ -216,7 +216,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: AppColors.textPrimary,
+                color: palette.textPrimary,
               ),
             ),
           ),
@@ -227,13 +227,14 @@ class _FeedbackScreenState extends State<FeedbackScreen>
 
   Widget _buildMoodCard() {
     final index = _mood.round().clamp(1, 5);
+    final palette = context.palette;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: palette.surfaceAlt,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: palette.divider),
       ),
       child: Column(
         children: [
@@ -265,10 +266,10 @@ class _FeedbackScreenState extends State<FeedbackScreen>
             child: Text(
               _moodCaptions[index],
               key: ValueKey<int>(index),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: palette.textPrimary,
               ),
             ),
           ),
@@ -277,8 +278,11 @@ class _FeedbackScreenState extends State<FeedbackScreen>
             data: SliderThemeData(
               trackHeight: 8,
               activeTrackColor: AppColors.primary,
-              inactiveTrackColor: AppColors.divider,
-              thumbShape: const _RingThumbShape(),
+              inactiveTrackColor: palette.divider,
+              thumbShape: _RingThumbShape(
+                fill: palette.thumbSurface,
+                shadow: palette.shadowStrong,
+              ),
               overlayColor: AppColors.primary.withValues(alpha: 0.12),
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
               activeTickMarkColor: Colors.transparent,
@@ -296,8 +300,8 @@ class _FeedbackScreenState extends State<FeedbackScreen>
               },
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -305,14 +309,14 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                   'Not great',
                   style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textSecondary,
+                    color: palette.textSecondary,
                   ),
                 ),
                 Text(
                   'Loved it',
                   style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textSecondary,
+                    color: palette.textSecondary,
                   ),
                 ),
               ],
@@ -326,9 +330,10 @@ class _FeedbackScreenState extends State<FeedbackScreen>
   @override
   Widget build(BuildContext context) {
     final viewInsets = MediaQuery.of(context).viewInsets;
+    final palette = context.palette;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: palette.background,
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
@@ -356,31 +361,31 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                             minimumSize: const Size(0, 32),
                           ),
                           onPressed: () {},
-                          child: const Text(
+                          child: Text(
                             'Need Help?',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
+                              color: palette.textSecondary,
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'How did it go?',
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: palette.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Your honest take helps us make the next cohort better.',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: palette.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -392,16 +397,17 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: palette.surfaceAlt,
                           borderRadius: BorderRadius.circular(
                             AppRadius.textField,
                           ),
-                          border: Border.all(color: AppColors.divider),
+                          border: Border.all(color: palette.divider),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.textPrimary.withValues(
-                                alpha: 0.04,
-                              ),
+                              // This is a SHADOW, not text — palette.shadowSoft,
+                              // not textPrimary (which flips to near-white in
+                              // dark mode and would produce a pale glow here).
+                              color: palette.shadowSoft,
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -419,10 +425,10 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                                 fit: BoxFit.contain,
                                 repeat: false,
                                 errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(
+                                    Icon(
                                       Icons.auto_stories_outlined,
                                       size: 20,
-                                      color: AppColors.textPrimary,
+                                      color: palette.textPrimary,
                                     ),
                               ),
                             ),
@@ -431,21 +437,21 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'COURSE',
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.5,
-                                      color: AppColors.textSecondary,
+                                      color: palette.textSecondary,
                                     ),
                                   ),
                                   Text(
                                     widget.opportunity.name,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
+                                      color: palette.textPrimary,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -471,9 +477,9 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                       const SizedBox(height: 18),
 
                       // What helped you most?
-                      const Row(
+                      Row(
                         children: [
-                          Text(
+                          const Text(
                             'What helped you the most? ',
                             style: TextStyle(
                               fontSize: 13,
@@ -484,7 +490,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                             '(optional)',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: palette.textSecondary,
                             ),
                           ),
                         ],
@@ -514,12 +520,12 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                       const SizedBox(height: 18),
 
                       // Your details
-                      const Text(
+                      Text(
                         'Your Details',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: palette.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -566,9 +572,9 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                       const SizedBox(height: 18),
 
                       // Comments — expandable, same pattern as Registration.
-                      const Row(
+                      Row(
                         children: [
-                          Text(
+                          const Text(
                             'Anything else you want to tell us? ',
                             style: TextStyle(
                               fontSize: 13,
@@ -579,7 +585,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                             '(optional)',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: palette.textSecondary,
                             ),
                           ),
                         ],
@@ -637,7 +643,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                                     child: Icon(
                                       Icons.drag_handle_rounded,
                                       size: 14,
-                                      color: AppColors.textSecondary.withValues(
+                                      color: palette.textSecondary.withValues(
                                         alpha: 0.6,
                                       ),
                                     ),
@@ -656,9 +662,9 @@ class _FeedbackScreenState extends State<FeedbackScreen>
                             valueListenable: _commentsController,
                             builder: (context, value, _) => Text(
                               '${value.text.length}/300',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.textSecondary,
+                                color: context.palette.textSecondary,
                               ),
                             ),
                           ),
@@ -716,7 +722,7 @@ class _FeedbackScreenState extends State<FeedbackScreen>
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 250),
               opacity: _showSuccessPanel ? 1 : 0,
-              child: Container(color: Colors.black.withValues(alpha: 0.45)),
+              child: Container(color: palette.scrim),
             ),
           ),
 
@@ -738,7 +744,13 @@ class _FeedbackScreenState extends State<FeedbackScreen>
 /// The stock [RoundSliderThumbShape] is a flat filled circle; this is the
 /// one place this screen intentionally departs from a built-in shape.
 class _RingThumbShape extends SliderComponentShape {
-  const _RingThumbShape();
+  // paint() below has no BuildContext, so the fill/shadow colors have to be
+  // handed in from the caller (which does have one) rather than read via
+  // context.palette here.
+  final Color fill;
+  final Color shadow;
+
+  const _RingThumbShape({required this.fill, required this.shadow});
 
   static const double _radius = 13;
 
@@ -765,11 +777,11 @@ class _RingThumbShape extends SliderComponentShape {
 
     canvas.drawShadow(
       Path()..addOval(Rect.fromCircle(center: center, radius: _radius)),
-      Colors.black.withValues(alpha: 0.15),
+      shadow,
       3,
       false,
     );
-    canvas.drawCircle(center, _radius, Paint()..color = Colors.white);
+    canvas.drawCircle(center, _radius, Paint()..color = fill);
     canvas.drawCircle(
       center,
       _radius - 1.25,
@@ -795,6 +807,7 @@ class _SuccessPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const panelHeight = 220.0;
+    final palette = context.palette;
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
@@ -804,17 +817,17 @@ class _SuccessPanel extends StatelessWidget {
       height: panelHeight,
       child: IgnorePointer(
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: palette.surfaceAlt,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(28),
               topRight: Radius.circular(28),
             ),
             boxShadow: [
               BoxShadow(
-                color: Color(0x26141414),
+                color: palette.shadowStrong,
                 blurRadius: 30,
-                offset: Offset(0, -10),
+                offset: const Offset(0, -10),
               ),
             ],
           ),
@@ -851,7 +864,11 @@ class _SuccessPanel extends StatelessWidget {
                             value: 1 - countdown.value,
                             strokeWidth: 3,
                             strokeCap: StrokeCap.round,
-                            backgroundColor: AppColors.divider,
+                            // The only cue the panel is about to auto-dismiss
+                            // — must stay visible against surfaceAlt, not
+                            // fade into it the way divider would in dark
+                            // mode.
+                            backgroundColor: palette.progressTrack,
                             valueColor: const AlwaysStoppedAnimation<Color>(
                               AppColors.primary,
                             ),
@@ -876,21 +893,21 @@ class _SuccessPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                const Text(
+                Text(
                   'Thanks for the feedback!',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: palette.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'We\'ve passed your notes on to the $courseName team.\nTaking you back to programs...',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: palette.textSecondary,
                   ),
                 ),
               ],

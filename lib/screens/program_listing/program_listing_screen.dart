@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/routes/app_router.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../services/opportunity_service.dart';
@@ -106,6 +107,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return PopScope(
       // This tab was reached via goToTab's pushReplacement, so it is the
       // only entry on the Navigator stack — there is nothing beneath it for
@@ -117,7 +119,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
         if (!didPop) AppRouter.goToTab(context, AppRouter.home);
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: palette.background,
         // Without this, the Scaffold shrinks its body when the keyboard opens,
         // which drags the Positioned(bottom:0) nav bar up to float above the
         // keyboard instead of staying pinned to the physical screen bottom.
@@ -164,60 +166,6 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                         children: [
                           const SizedBox(height: AppSpacing.lg),
 
-                          // Personalized greeting — plain page content, not
-                          // overlaid on the hero image. Wrapped in a
-                          // full-width SizedBox so it's genuinely flush
-                          // left; the outer Column here defaults to
-                          // centered cross-axis alignment, and without an
-                          // explicit width this block would just shrink-wrap
-                          // to its own text width and end up centered on
-                          // the page instead of aligned with everything
-                          // else below it.
-                          SizedBox(
-                            width: double.infinity,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.md,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  RichText(
-                                    text: TextSpan(
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.textPrimary,
-                                          ),
-                                      children: const [
-                                        TextSpan(text: 'Hi, '),
-                                        TextSpan(
-                                          text: 'Team 7!',
-                                          style: TextStyle(
-                                            color: AppColors.primary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "Here's what you can explore today.",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: AppColors.textSecondary,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
-
                           // Search Bar Pill
                           Padding(
                             padding: const EdgeInsets.symmetric(
@@ -225,10 +173,10 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                             ),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: AppColors.surface,
+                                color: palette.surface,
                                 borderRadius: BorderRadius.circular(30),
                                 border: Border.all(
-                                  color: AppColors.divider.withValues(
+                                  color: palette.divider.withValues(
                                     alpha: 0.3,
                                   ),
                                 ),
@@ -239,9 +187,9 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.search,
-                                    color: AppColors.textSecondary,
+                                    color: palette.textSecondary,
                                     size: 20,
                                   ),
                                   const SizedBox(width: AppSpacing.sm),
@@ -259,7 +207,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                                             .textTheme
                                             .bodyMedium
                                             ?.copyWith(
-                                              color: AppColors.textSecondary,
+                                              color: palette.textSecondary,
                                             ),
                                         border: InputBorder.none,
                                         enabledBorder: InputBorder.none,
@@ -271,16 +219,19 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
                                   Container(
                                     height: 24,
                                     width: 1,
-                                    color: AppColors.divider.withValues(
+                                    color: palette.divider.withValues(
                                       alpha: 0.3,
                                     ),
                                     margin: const EdgeInsets.symmetric(
                                       horizontal: AppSpacing.sm,
                                     ),
                                   ),
+                                  // Genuine icon tint (not a shadow) — this
+                                  // one really should stay a plain alpha
+                                  // composite of textPrimary.
                                   Icon(
                                     Icons.tune,
-                                    color: AppColors.textPrimary.withValues(
+                                    color: palette.textPrimary.withValues(
                                       alpha: 0.7,
                                     ),
                                     size: 20,
@@ -401,19 +352,20 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
     OpportunityType? type,
   ) {
     final isSelected = _selectedCategory == type;
+    final palette = context.palette;
     return Padding(
       padding: const EdgeInsets.only(right: AppSpacing.sm),
       child: ChoiceChip(
         label: Text(label),
         selected: isSelected,
         showCheckmark: false,
-        backgroundColor: AppColors.background,
+        backgroundColor: palette.surfaceAlt,
         selectedColor: AppColors.accent,
         side: isSelected
             ? BorderSide.none
-            : BorderSide(color: AppColors.divider.withValues(alpha: 0.5)),
+            : BorderSide(color: palette.divider.withValues(alpha: 0.5)),
         labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: isSelected ? AppColors.onPrimary : AppColors.textPrimary,
+          color: isSelected ? AppColors.onPrimary : palette.textPrimary,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -461,7 +413,7 @@ class _ProgramListingScreenState extends State<ProgramListingScreen> {
             'Try adjusting your search or filters.',
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            ).textTheme.bodyMedium?.copyWith(color: context.palette.textSecondary),
           ),
           const SizedBox(height: AppSpacing.xl),
           SizedBox(

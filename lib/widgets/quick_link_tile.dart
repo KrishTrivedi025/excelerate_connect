@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_palette.dart';
 import '../core/theme/app_theme.dart';
 
 /// Component Library 6.3 — Home screen "Quick Links" grid tile.
@@ -44,7 +45,7 @@ class _QuickLinkTileState extends State<QuickLinkTile> {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: const Color(0xFFE3F2FD),
+                  backgroundColor: context.palette.infoSurface,
                   child: Icon(widget.icon, color: AppColors.primary),
                 ),
                 const SizedBox(height: AppSpacing.sm),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_palette.dart';
 import '../core/theme/app_theme.dart';
 
 class ErrorRetryCard extends StatelessWidget {
@@ -18,7 +19,7 @@ class ErrorRetryCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(AppRadius.card),
             boxShadow: [
               BoxShadow(
@@ -53,7 +54,7 @@ class ErrorRetryCard extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: context.palette.textPrimary,
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -61,7 +62,7 @@ class ErrorRetryCard extends StatelessWidget {
                 message,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.palette.textSecondary,
                   height: 1.5,
                 ),
               ),

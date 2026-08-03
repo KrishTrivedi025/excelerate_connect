@@ -20,6 +20,8 @@ class _DevApp extends StatelessWidget {
       title: 'Excelerate Connect — Program Listing (dev)',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
       home: const ProgramListingScreen(),
     );
   }

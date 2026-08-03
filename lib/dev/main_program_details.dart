@@ -23,6 +23,8 @@ class _DevApp extends StatelessWidget {
       title: 'Excelerate Connect — Program Details (dev)',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
       home: ProgramDetailsScreen(opportunity: mockOpportunities.first),
     );
   }

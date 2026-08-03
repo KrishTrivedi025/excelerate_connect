@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/routes/app_router.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../services/opportunity_service.dart';
@@ -132,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // Flutter's "nothing left to pop" handling.
       canPop: false,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
         // Without this, the Scaffold shrinks its body when the keyboard opens,
         // which drags the Positioned(bottom:0) nav bar up to float above the
         // keyboard instead of staying pinned to the physical screen bottom.
@@ -191,12 +192,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(height: AppSpacing.lg),
                             _buildGreeting(),
                             const SizedBox(height: AppSpacing.base),
-                            _buildSearchBar(),
                           ],
                         ),
                       ),
                     ),
-                    // Everything below the search bar — Continue Learning,
+                    // Everything below the greeting — Continue Learning,
                     // Announcements, and Featured Programs — refreshes as
                     // one unit behind one big loader, not three separate
                     // small ones.
@@ -301,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
               AiChatButton(
                 showHint: _showChatHint,
                 onDismissHint: () => setState(() => _showChatHint = false),
-                onTap: () => _showChatbotDialog(context),
+                onTap: () => Navigator.pushNamed(context, AppRouter.aiChat),
               ),
               const BottomNavBar(activeTab: AppTab.home),
             ],
@@ -313,6 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildGreeting() {
     final textTheme = Theme.of(context).textTheme;
+    final palette = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -320,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
           text: TextSpan(
             style: textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: palette.textPrimary,
               letterSpacing: -0.5,
             ),
             children: const [
@@ -337,59 +338,11 @@ class _HomeScreenState extends State<HomeScreen> {
         Text(
           'Keep learning, keep growing.',
           style: textTheme.bodyMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: palette.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
       ],
-    );
-  }
-
-  // Matches the Explore tab's search bar exactly (same border, filter
-  // icon, and divider) — kept in sync intentionally per user feedback.
-  Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: AppColors.divider.withValues(alpha: 0.3)),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: 2,
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: TextField(
-              onChanged: (val) => setState(() => searchQuery = val),
-              decoration: InputDecoration(
-                hintText: 'Search programs, skills, or topics...',
-                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                isDense: true,
-              ),
-            ),
-          ),
-          Container(
-            height: 24,
-            width: 1,
-            color: AppColors.divider.withValues(alpha: 0.3),
-            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-          ),
-          Icon(
-            Icons.tune,
-            color: AppColors.textPrimary.withValues(alpha: 0.7),
-            size: 20,
-          ),
-        ],
-      ),
     );
   }
 
@@ -462,7 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: isActive ? 18 : 6,
                 height: 6,
                 decoration: BoxDecoration(
-                  color: isActive ? AppColors.primary : AppColors.divider,
+                  color: isActive ? AppColors.primary : context.palette.divider,
                   borderRadius: BorderRadius.circular(3),
                 ),
               );
@@ -475,6 +428,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildContinueLearningCard(Opportunity program) {
     final textTheme = Theme.of(context).textTheme;
+    final palette = context.palette;
     final progressRatio = program.progressPercentage;
     // No per-program lesson-count field exists in the data model — derived
     // from a shared assumed total, consistent with the 12/20 already shown
@@ -487,11 +441,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFDEDE1),
+        color: palette.warmSurface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.primaryLight.withValues(alpha: 0.4),
-        ),
+        border: Border.all(color: palette.warmSurfaceBorder),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.04),
@@ -578,7 +530,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       program.shortDescription,
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: palette.textSecondary,
                         height: 1.3,
                       ),
                       maxLines: 1,
@@ -591,7 +543,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 5,
                         child: LinearProgressIndicator(
                           value: progressRatio,
-                          backgroundColor: Colors.white,
+                          backgroundColor: palette.progressTrack,
                           color: AppColors.primary,
                         ),
                       ),
@@ -604,7 +556,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           '$completedLessonsForProgram / $totalLessonsAssumed Lessons',
                           style: textTheme.labelSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textSecondary,
+                            color: palette.textSecondary,
                           ),
                         ),
                         GestureDetector(
@@ -679,9 +631,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? Icons.bookmark
                       : Icons.bookmark_border_outlined,
                   size: 14,
-                  color: isBookmarked
-                      ? AppColors.primary
-                      : AppColors.textPrimary,
+                  color: isBookmarked ? AppColors.primary : palette.textPrimary,
                 ),
               ),
             ),
@@ -741,7 +691,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: isActive ? 18 : 6,
                 height: 6,
                 decoration: BoxDecoration(
-                  color: isActive ? AppColors.primary : AppColors.divider,
+                  color: isActive ? AppColors.primary : context.palette.divider,
                   borderRadius: BorderRadius.circular(3),
                 ),
               );
@@ -792,6 +742,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCategoryFilterPills() {
     final textTheme = Theme.of(context).textTheme;
+    final palette = context.palette;
     return SizedBox(
       height: 42,
       child: ListView.builder(
@@ -816,10 +767,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: palette.surfaceAlt,
                   borderRadius: BorderRadius.circular(100),
                   border: Border.all(
-                    color: isActive ? AppColors.primary : AppColors.divider,
+                    color: isActive ? AppColors.primary : palette.divider,
                     width: isActive ? 1.5 : 1,
                   ),
                   boxShadow: [
@@ -836,18 +787,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(
                       _categoryPillIcon(type),
                       size: 14,
-                      color: isActive
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
+                      color: isActive ? AppColors.primary : palette.textSecondary,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       label,
                       style: textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isActive
-                            ? AppColors.primary
-                            : AppColors.textPrimary,
+                        color: isActive ? AppColors.primary : palette.textPrimary,
                       ),
                     ),
                   ],
@@ -953,6 +900,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildEmptyState() {
     final textTheme = Theme.of(context).textTheme;
+    final palette = context.palette;
     return Container(
       margin: const EdgeInsets.symmetric(
         vertical: 24,
@@ -960,17 +908,17 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: palette.divider),
       ),
       child: Column(
         children: [
           Container(
             width: 48,
             height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFF7ED),
+            decoration: BoxDecoration(
+              color: palette.emptyIconBg,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.search_off, color: AppColors.primary),
@@ -982,9 +930,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'We couldn\'t find matches for "$searchQuery" in this category.',
+            searchQuery.isEmpty
+                ? 'No programs found in this category.'
+                : 'We couldn\'t find matches for "$searchQuery" in this category.',
             style: textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: palette.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1007,7 +957,10 @@ class _HomeScreenState extends State<HomeScreen> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.stars, color: Colors.amber, size: 16),
+            // AppColors.primary, not Colors.amber — amber reads fine on
+            // light but is unreadable against the dark-mode inverse
+            // surface this snackbar now resolves to via snackBarTheme.
+            const Icon(Icons.stars, color: AppColors.primary, size: 16),
             const SizedBox(width: 8),
             Text(text),
           ],
@@ -1016,12 +969,16 @@ class _HomeScreenState extends State<HomeScreen> {
         duration: const Duration(milliseconds: 1800),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
         margin: const EdgeInsets.only(bottom: 110, left: 24, right: 24),
-        backgroundColor: AppColors.textPrimary,
+        // No backgroundColor override — snackBarTheme now supplies
+        // inverseSurface/onInverseSurface, correct in both themes. The old
+        // hardcoded AppColors.textPrimary fill would've become near-white
+        // in dark mode with unreadable near-white text on it.
       ),
     );
   }
 
   void _showLessonsSheet(BuildContext context) {
+    final palette = context.palette;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1034,9 +991,9 @@ class _HomeScreenState extends State<HomeScreen> {
             final double progressRatio = doneCount / lessonCount;
             return Container(
               height: MediaQuery.of(context).size.height * 0.75,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: palette.surfaceAlt,
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(32),
                   topRight: Radius.circular(32),
                 ),
@@ -1048,7 +1005,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: 48,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: palette.sheetHandle,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -1058,7 +1015,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
@@ -1066,15 +1023,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1A1A1A),
+                                color: palette.textPrimary,
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
                               'Flutter Mobile Development',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
+                                color: palette.textSecondary,
                               ),
                             ),
                           ],
@@ -1086,7 +1043,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  const Divider(color: AppColors.divider),
+                  Divider(color: palette.divider),
                   Container(
                     margin: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -1094,7 +1051,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFDEDE1),
+                      color: palette.warmSurface,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -1112,10 +1069,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             Text(
                               '${(progressRatio * 100).toInt()}% ($doneCount/$lessonCount)',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1A1A1A),
+                                color: palette.textPrimary,
                               ),
                             ),
                           ],
@@ -1127,7 +1084,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             height: 6,
                             child: LinearProgressIndicator(
                               value: progressRatio,
-                              backgroundColor: Colors.white,
+                              backgroundColor: palette.progressTrack,
                               color: AppColors.primary,
                             ),
                           ),
@@ -1163,13 +1120,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: isDone
-                                    ? const Color(0xFFFFFDFB)
-                                    : Colors.white,
+                                    ? palette.warmRowFill
+                                    : palette.surfaceAlt,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: isDone
-                                      ? const Color(0xFFFFEDD5)
-                                      : AppColors.divider,
+                                      ? palette.warmRowBorder
+                                      : palette.divider,
                                 ),
                               ),
                               child: Row(
@@ -1178,15 +1135,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                     radius: 12,
                                     backgroundColor: isDone
                                         ? AppColors.primary
-                                        : AppColors.divider,
+                                        : palette.divider,
                                     child: Text(
                                       '${idx + 1}',
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         color: isDone
-                                            ? Colors.white
-                                            : AppColors.textSecondary,
+                                            ? AppColors.onPrimary
+                                            : palette.textSecondary,
                                       ),
                                     ),
                                   ),
@@ -1201,7 +1158,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
-                                            color: AppColors.textPrimary,
+                                            color: palette.textPrimary,
                                             decoration: isDone
                                                 ? TextDecoration.lineThrough
                                                 : null,
@@ -1210,9 +1167,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         const SizedBox(height: 2),
                                         Text(
                                           _lessonDurations[idx],
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 11,
-                                            color: AppColors.textSecondary,
+                                            color: palette.textSecondary,
                                           ),
                                         ),
                                       ],
@@ -1224,7 +1181,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         : Icons.radio_button_unchecked,
                                     color: isDone
                                         ? AppColors.primary
-                                        : const Color(0xFFD1D5DB),
+                                        : palette.divider,
                                     size: 20,
                                   ),
                                 ],
@@ -1244,57 +1201,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showChatbotDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.smart_toy_outlined, color: AppColors.primary),
-              SizedBox(width: 10),
-              Text(
-                'Excelerate AI Guide',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          content: const Text(
-            'Hey there! 👋 I\'m your Excelerate Assistant.\n\nYou can ask me anything about Dart, Flutter, or UI/UX design. Would you like to resume your Flutter course right now?',
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _showLessonsSheet(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(100),
-                ),
-              ),
-              child: const Text('Resume Lesson'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }

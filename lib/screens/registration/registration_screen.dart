@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../widgets/floating_action_bar.dart';
@@ -89,24 +90,16 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   Future<void> _pickDateOfBirth() async {
     final DateTime initial = _selectedDOB ?? DateTime(2002, 5, 15);
+    // No custom `builder:` here — AppTheme's own datePickerTheme (light and
+    // dark) already styles this correctly. The previous builder forced
+    // ThemeData.light(), which gave a full-screen white calendar
+    // regardless of app theme and dropped Poppins/AppPalette from the
+    // picker's subtree entirely.
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initial,
       firstDate: DateTime(1940),
       lastDate: DateTime.now().subtract(const Duration(days: 365 * 13)),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null && mounted) {
@@ -137,10 +130,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     // a disconnected, one-off FocusNode instead means there is no longer a
     // text field on record for anything to restore focus to.
     FocusScope.of(context).requestFocus(FocusNode());
+    final palette = context.palette;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: palette.surfaceAlt,
       // Without this, the sheet is capped to Flutter's default bottom-sheet
       // height and its content isn't scrollable — a 6-option list (or any
       // list, on a shorter screen) overflows instead of scrolling.
@@ -171,9 +165,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.close,
-                          color: AppColors.textSecondary,
+                          color: palette.textSecondary,
                         ),
                         onPressed: () => Navigator.of(sheetContext).pop(),
                       ),
@@ -189,12 +183,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             margin: const EdgeInsets.only(bottom: 8),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppColors.wave.withValues(alpha: 0.4)
-                                  : Colors.white,
+                                  ? palette.selectedSurface
+                                  : palette.surfaceAlt,
                               border: Border.all(
                                 color: isSelected
                                     ? AppColors.primary
-                                    : AppColors.divider,
+                                    : palette.divider,
                               ),
                               borderRadius: BorderRadius.circular(
                                 AppRadius.textField,
@@ -217,7 +211,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                     fontWeight: isSelected
                                         ? FontWeight.w600
                                         : FontWeight.w400,
-                                    color: AppColors.textPrimary,
+                                    color: palette.textPrimary,
                                   ),
                                 ),
                                 trailing: isSelected
@@ -287,7 +281,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     if (!isDobValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select your Date of Birth'),
+          // Explicit white text — snackBarTheme.contentTextStyle is tuned
+          // for the default inverseSurface background, not this red fill.
+          content: Text(
+            'Please select your Date of Birth',
+            style: TextStyle(color: Colors.white),
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -299,6 +298,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         const SnackBar(
           content: Text(
             'Please select how you were introduced to this opportunity',
+            style: TextStyle(color: Colors.white),
           ),
           backgroundColor: AppColors.error,
         ),
@@ -325,18 +325,19 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   InputDecoration _fieldDecoration(String hint) {
+    final palette = context.palette;
     return InputDecoration(
       hintText: hint,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: palette.fieldFill,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.textField),
-        borderSide: const BorderSide(color: AppColors.divider),
+        borderSide: BorderSide(color: palette.divider),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.textField),
-        borderSide: const BorderSide(color: AppColors.divider),
+        borderSide: BorderSide(color: palette.divider),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.textField),
@@ -344,7 +345,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.textField),
-        borderSide: const BorderSide(color: AppColors.error),
+        borderSide: BorderSide(color: palette.errorText),
       ),
     );
   }
@@ -355,9 +356,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         ? 'Select your date of birth'
         : '${_selectedDOB!.month}/${_selectedDOB!.day}/${_selectedDOB!.year}';
     final viewInsets = MediaQuery.of(context).viewInsets;
+    final palette = context.palette;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: palette.background,
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
@@ -385,31 +387,31 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             minimumSize: const Size(0, 32),
                           ),
                           onPressed: () {},
-                          child: const Text(
+                          child: Text(
                             'Need Help?',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
+                              color: palette.textSecondary,
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Course Registration',
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: palette.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Enter your details below to register for your selected course.',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: palette.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -422,16 +424,17 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: palette.surfaceAlt,
                           borderRadius: BorderRadius.circular(
                             AppRadius.textField,
                           ),
-                          border: Border.all(color: AppColors.divider),
+                          border: Border.all(color: palette.divider),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.textPrimary.withValues(
-                                alpha: 0.04,
-                              ),
+                              // A SHADOW, not text — palette.shadowSoft, not
+                              // textPrimary (which flips to near-white in
+                              // dark mode).
+                              color: palette.shadowSoft,
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -455,10 +458,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                 fit: BoxFit.contain,
                                 repeat: false,
                                 errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(
+                                    Icon(
                                       Icons.auto_stories_outlined,
                                       size: 20,
-                                      color: AppColors.textPrimary,
+                                      color: palette.textPrimary,
                                     ),
                               ),
                             ),
@@ -467,21 +470,21 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'COURSE',
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.5,
-                                      color: AppColors.textSecondary,
+                                      color: palette.textSecondary,
                                     ),
                                   ),
                                   Text(
                                     widget.opportunity.name,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
+                                      color: palette.textPrimary,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -494,7 +497,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       ),
                       const SizedBox(height: 14),
 
-                      // FIELD 1: Full Name
+                      // FIELD 1: Full Name — brightness-independent text, no
+                      // color set (inherits from bodyMedium), so this one
+                      // stays const throughout.
                       const Text(
                         'Full Name',
                         style: TextStyle(
@@ -548,14 +553,14 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           height: 46,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: palette.fieldFill,
                             borderRadius: BorderRadius.circular(
                               AppRadius.textField,
                             ),
                             border: Border.all(
                               color: _dobTouchedInvalid
-                                  ? AppColors.error
-                                  : AppColors.divider,
+                                  ? palette.errorText
+                                  : palette.divider,
                             ),
                           ),
                           child: Row(
@@ -566,26 +571,26 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: _selectedDOB == null
-                                      ? AppColors.textSecondary
-                                      : AppColors.textPrimary,
+                                      ? palette.textSecondary
+                                      : palette.textPrimary,
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.calendar_today_outlined,
                                 size: 16,
-                                color: AppColors.textSecondary,
+                                color: palette.textSecondary,
                               ),
                             ],
                           ),
                         ),
                       ),
                       if (_dobTouchedInvalid)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 6, left: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6, left: 4),
                           child: Text(
                             'Please select your date of birth',
                             style: TextStyle(
-                              color: AppColors.error,
+                              color: palette.errorText,
                               fontSize: 12,
                             ),
                           ),
@@ -633,11 +638,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           height: 46,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: palette.fieldFill,
                             borderRadius: BorderRadius.circular(
                               AppRadius.textField,
                             ),
-                            border: Border.all(color: AppColors.divider),
+                            border: Border.all(color: palette.divider),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -647,14 +652,14 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: _selectedGender == null
-                                      ? AppColors.textSecondary
-                                      : AppColors.textPrimary,
+                                      ? palette.textSecondary
+                                      : palette.textPrimary,
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.keyboard_arrow_down,
                                 size: 18,
-                                color: AppColors.textSecondary,
+                                color: palette.textSecondary,
                               ),
                             ],
                           ),
@@ -664,12 +669,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                       // FIELD 5: How were you introduced? (required)
                       RichText(
-                        text: const TextSpan(
+                        text: TextSpan(
                           text: 'How were you introduced to this opportunity? ',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: palette.textPrimary,
                           ),
                           children: [
                             TextSpan(
@@ -677,7 +682,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.error,
+                                color: palette.errorText,
                               ),
                             ),
                           ],
@@ -690,14 +695,14 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           height: 46,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: palette.fieldFill,
                             borderRadius: BorderRadius.circular(
                               AppRadius.textField,
                             ),
                             border: Border.all(
                               color: _introducedTouchedInvalid
-                                  ? AppColors.error
-                                  : AppColors.divider,
+                                  ? palette.errorText
+                                  : palette.divider,
                             ),
                           ),
                           child: Row(
@@ -708,26 +713,26 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: _howIntroduced == null
-                                      ? AppColors.textSecondary
-                                      : AppColors.textPrimary,
+                                      ? palette.textSecondary
+                                      : palette.textPrimary,
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.keyboard_arrow_down,
                                 size: 18,
-                                color: AppColors.textSecondary,
+                                color: palette.textSecondary,
                               ),
                             ],
                           ),
                         ),
                       ),
                       if (_introducedTouchedInvalid)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 6, left: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6, left: 4),
                           child: Text(
                             'Please select how you were introduced',
                             style: TextStyle(
-                              color: AppColors.error,
+                              color: palette.errorText,
                               fontSize: 12,
                             ),
                           ),
@@ -802,7 +807,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                     child: Icon(
                                       Icons.drag_handle_rounded,
                                       size: 14,
-                                      color: AppColors.textSecondary.withValues(
+                                      color: palette.textSecondary.withValues(
                                         alpha: 0.6,
                                       ),
                                     ),
@@ -821,9 +826,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             valueListenable: _whyApplyController,
                             builder: (context, value, _) => Text(
                               '${value.text.length}/300',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.textSecondary,
+                                color: context.palette.textSecondary,
                               ),
                             ),
                           ),
@@ -885,7 +890,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 250),
               opacity: _showSuccessPanel ? 1 : 0,
-              child: Container(color: Colors.black.withValues(alpha: 0.45)),
+              child: Container(color: palette.scrim),
             ),
           ),
 
@@ -917,6 +922,7 @@ class _SuccessPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const panelHeight = 220.0;
+    final palette = context.palette;
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
@@ -926,17 +932,17 @@ class _SuccessPanel extends StatelessWidget {
       height: panelHeight,
       child: IgnorePointer(
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: palette.surfaceAlt,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(28),
               topRight: Radius.circular(28),
             ),
             boxShadow: [
               BoxShadow(
-                color: Color(0x26141414),
+                color: palette.shadowStrong,
                 blurRadius: 30,
-                offset: Offset(0, -10),
+                offset: const Offset(0, -10),
               ),
             ],
           ),
@@ -973,7 +979,9 @@ class _SuccessPanel extends StatelessWidget {
                             value: 1 - countdown.value,
                             strokeWidth: 3,
                             strokeCap: StrokeCap.round,
-                            backgroundColor: AppColors.divider,
+                            // The only cue the panel is about to auto-dismiss
+                            // — must stay visible against surfaceAlt.
+                            backgroundColor: palette.progressTrack,
                             valueColor: const AlwaysStoppedAnimation<Color>(
                               AppColors.primary,
                             ),
@@ -998,21 +1006,21 @@ class _SuccessPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                const Text(
+                Text(
                   'Registered!',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: palette.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'You\'re all set for $opportunityName.\nTaking you back to the course...',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: palette.textSecondary,
                   ),
                 ),
               ],

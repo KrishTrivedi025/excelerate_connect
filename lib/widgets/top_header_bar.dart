@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_palette.dart';
 import '../core/theme/app_theme.dart';
+import 'theme_toggle_button.dart';
 
 /// Shared top bar — logo/wordmark + notification bell + profile avatar.
 /// Used by every tab screen (Home, Program Listing, ...) so the chrome is
@@ -25,13 +27,16 @@ class TopHeaderBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Logo alone — the wordmark is baked into the logo image itself, so
-        // no separate "Excelerate" text label is needed next to it.
-        const _LogoMark(),
+        // Expanded (not a fixed-width sibling in a spaceBetween Row) — a
+        // third 44px control plus its gap pushes the old fixed layout past
+        // 360dp and overflows on budget Android devices. Expanded lets the
+        // logo shrink instead.
+        const Expanded(child: _LogoMark()),
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             GestureDetector(
               onTap: onNotificationTap,
@@ -42,20 +47,20 @@ class TopHeaderBar extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: palette.surface,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.divider),
+                      border: Border.all(color: palette.divider),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
+                          color: palette.shadowSoft,
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.notifications_none_outlined,
-                      color: AppColors.textPrimary,
+                      color: palette.textPrimary,
                       size: 22,
                     ),
                   ),
@@ -68,7 +73,7 @@ class TopHeaderBar extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
+                          border: Border.all(color: palette.background, width: 1.5),
                         ),
                         constraints: const BoxConstraints(
                           minWidth: 18,
@@ -90,6 +95,8 @@ class TopHeaderBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
+            const ThemeToggleButton(),
+            const SizedBox(width: 12),
             GestureDetector(
               onTap: onProfileTap,
               child: Container(
@@ -98,18 +105,18 @@ class TopHeaderBar extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.divider, width: 1),
+                  border: Border.all(color: palette.divider, width: 1),
                 ),
                 child: CachedNetworkImage(
                   imageUrl: avatarUrl ?? _defaultAvatarUrl,
                   fit: BoxFit.cover,
                   placeholder: (context, url) =>
-                      Container(color: AppColors.divider),
+                      Container(color: palette.divider),
                   errorWidget: (context, url, error) => Container(
-                    color: AppColors.divider,
-                    child: const Icon(
+                    color: palette.divider,
+                    child: Icon(
                       Icons.person_outline,
-                      color: AppColors.textSecondary,
+                      color: palette.textSecondary,
                     ),
                   ),
                 ),
@@ -130,11 +137,11 @@ class _LogoMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The logo asset is a wide wordmark (~4:1), not a square icon — sizing
-    // the box to match its real aspect ratio instead of a square avoids
-    // BoxFit.contain shrinking it down to a tiny sliver.
-    return SizedBox(
-      width: 190,
+    // width: double.infinity (not a fixed 190) so this shrinks gracefully
+    // under the Expanded wrapper on narrow screens instead of overflowing
+    // once the header gained a third trailing control.
+    final logo = SizedBox(
+      width: double.infinity,
       height: 48,
       child: Image.asset(
         'assets/images/logo.png',
@@ -142,6 +149,21 @@ class _LogoMark extends StatelessWidget {
         alignment: Alignment.centerLeft,
         errorBuilder: (context, error, stackTrace) => const _FallbackXMark(),
       ),
+    );
+
+    // logo.png has no alpha channel — it's opaque art on a near-white
+    // #F7F7F5 plate. In light mode that's invisible against the page; in
+    // dark mode it would render as a stark white rectangle. This container
+    // is a no-op in light (transparent) and frames the logo as a
+    // deliberate badge in dark, matching its own baked-in ground exactly
+    // so there's no visible seam.
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: context.palette.logoPlate,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: logo,
     );
   }
 }
