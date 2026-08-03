@@ -112,7 +112,7 @@ flutter run
 
 ## Demo Video
 
-_Link to be added once recorded._
+**[Watch the full app walkthrough](https://drive.google.com/file/d/1Bkvfk-YkCyhq7tp4fqh5EQuhwDZ42yMB/view?usp=drivesdk)** — a guided tour of the login flow, home dashboard, program browsing, form submission, the AI Guide, and the light/dark theme toggle.
 
 ## Contributors
 
