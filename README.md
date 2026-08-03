@@ -90,6 +90,11 @@ excelerate_connect/
   <tr>
     <td align="center"><img src="ScreenShot/program%20list.jpg" width="220"/><br/><b>Program Listing</b></td>
     <td align="center"><img src="ScreenShot/program%20details.jpg" width="220"/><br/><b>Program Details</b></td>
+    <td align="center"><img src="ScreenShot/registration.jpg" width="220"/><br/><b>Registration</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="ScreenShot/feedback.jpg" width="220"/><br/><b>Feedback</b></td>
+    <td align="center"><img src="ScreenShot/chatbot.jpg" width="220"/><br/><b>AI Guide</b></td>
     <td></td>
   </tr>
 </table>
