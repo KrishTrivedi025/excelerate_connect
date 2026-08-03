@@ -117,7 +117,7 @@ _Link to be added once recorded._
 | Home screen, Registration form | Hari |
 | Async data layer (`OpportunityService`), `ErrorRetryCard` | Suraj |
 | Program Listing & Details, async wiring | Victor |
-| Team Lead — navigation, full UI/UX pass, app-wide Light/Dark theme system, AI Guide chatbot, documentation | Krrish |
+| Team Lead — navigation, full UI/UX pass, app-wide Light/Dark theme system, AI Guide chatbot, documentation | Krish |
 
 ## Changelog
 
